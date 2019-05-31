@@ -1,0 +1,45 @@
+Patient	SurgeryNumber	Tumor	Histology	IDH_Mut	1p19q	7gain10loss	Grade	AgeAtSampleCollection	Sex	Race	Ethnicity	Treatment	Resection	Color	
+P300	SF10711	Recurrence1	Astro	1	0	0	2	58	M	Other	Hispanic/Latino	none	STR	darkorchid1	
+P303	SF10809	Primary	Astro	1	0	0	2	38	M	White/Caucasian	Not Hispanic/Latino	none	STR	chartreuse	
+P326	SF10832	Primary	Astro	1	0	0	2	37	M	White/Caucasian	Not Hispanic/Latino	none	STR	NA	
+P327	SF10932	Primary	Astro	1	0	0	3	30	F	White/Caucasian	Not Hispanic/Latino	none	GTR	mediumseagreen	
+P375	SF11136	Primary	Astro	1	0	0	2	34	M	White/Caucasian	Hispanic/Latino	none	NTR	darkgreen	
+P453	SF11690	Primary	Astro	1	0	0	2	28	M	White/Caucasian	Not Hispanic/Latino	none	NTR	darkolivegreen4	
+P456	SF11904	Primary	Astro	1	0	0	3	30	M	White/Caucasian	Not Hispanic/Latino	none	NTR	NA	
+P372	SF11046	Primary	GBM	0	0	1	4	64	M	White/Caucasian	Not Hispanic/Latino	none	NTR	NA	
+P373	SF11048	Primary	GBM	0	0	1	4	71	M	White/Caucasian	Hispanic/Latino	none	NTR	NA	
+P413	SF11173	Primary	GBM	0	0	1	4	63	M	White/Caucasian	Not Hispanic/Latino	none	GTR	firebrick4	
+P454	SF11731	Primary	GBM	0	0	1	4	60	F	White/Caucasian	Not Hispanic/Latino	none	STR	red3	
+P260	SF11294	Recurrence1	GBM	1	0	0	4	28	F	White/Caucasian	Hispanic/Latino	none	NTR	NA	
+P455	SF11901	Primary	GBM	0	0	1	4	77	F	White/Caucasian	Not Hispanic/Latino	none	STR	orangered	
+P457	SF11915	Primary	GBM	0	0	1	4	75	M	White/Caucasian	Not Hispanic/Latino	none	NTR	hotpink	
+P452	SF11644	Primary	GBM	0	0	0	4	58	M	NA	NA	none	NTR	NA	
+P41	SF9663	Primary	Oligo	1	1	0	2	19	F	NA	NA	none	GTR	blue	
+P49	SF9745	Primary	Oligo	1	1	0	3	23	M	NA	NA	none	STR	dodgerblue	
+P302	SF10788	Recurrence1	Oligo	1	1	0	3	45	F	Other	Hispanic/Latino	XRT	STR	darkmagenta	
+P340	SF11055	Primary	Oligo	1	1	0	2	39	F	White/Caucasian	Not Hispanic/Latino	none	STR	steelblue1	
+P259	SF9162	Primary	Oligo	1	1	0	2	43	F	NA	NA	none	GTR	NA	
+P450	SF11612	Recurrence1	Oligo	1	1	0	3	67	M	White/Caucasian	Not Hispanic/Latino	none	STR	purple4	
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
+															
