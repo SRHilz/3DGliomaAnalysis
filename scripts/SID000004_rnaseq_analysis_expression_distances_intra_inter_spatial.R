@@ -123,6 +123,8 @@ toAnalyzeMeans$patientRelationship <- "inter"
 toAnalyzeMeans[which(toAnalyzeMeans$Patient1 == toAnalyzeMeans$Patient2),]$patientRelationship <- 'intra'
 toAnalyzeMeans$subtypeRelationship <- "between"
 toAnalyzeMeans[which(toAnalyzeMeans$IDH_Mut1 == toAnalyzeMeans$IDH_Mut2),]$subtypeRelationship <- 'within'
+toAnalyzeMeans$IDH_Mut1 <- factor(toAnalyzeMeans$IDH_Mut1, levels=c(1,0))
+toAnalyzeMeans$IDH_Mut2 <- factor(toAnalyzeMeans$IDH_Mut2, levels=c(1,0))
 
 # Reformat into matrix to look at heatmap
 meanDissimilarityMatrix <- acast(toAnalyzeMeans[,c('Patient1','Patient2','dissimilarityMean')], Patient1 ~ Patient2, value.var="dissimilarityMean")
@@ -149,6 +151,8 @@ pheatmap(meanDissimilarityMatrix,
 
 ## Now look at means within subtype, and further by if they are inter or intra
 toAnalyzeMeansWithinSubtype <- toAnalyzeMeans[which(toAnalyzeMeans$subtypeRelationship == 'within'),]
+patientsToDrop <- c('P452') #we drop our unique non-cannonical GBM from this analysis
+toAnalyzeMeansWithinSubtype <- toAnalyzeMeansWithinSubtype[which(!(toAnalyzeMeansWithinSubtype$Patient1 %in% patientsToDrop | toAnalyzeMeansWithinSubtype$Patient2 %in% patientsToDrop)),]
 ggplot(toAnalyzeMeansWithinSubtype, aes(x=IDH_Mut1, y=dissimilarityMean, fill=patientRelationship)) +
   geom_boxplot(position=position_dodge(0.8)) +
   scale_fill_manual(values=c("gray28","gray72"))+
@@ -156,15 +160,10 @@ ggplot(toAnalyzeMeansWithinSubtype, aes(x=IDH_Mut1, y=dissimilarityMean, fill=pa
   theme(axis.text.x = element_text(size=20, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 20), axis.text.y = element_text(size=20, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
 for (relationship in unique(toAnalyzeMeansWithinSubtype$patientRelationship)){
   print(relationship)
-  GBM <- toAnalyzeMeansWithinSubtype[which(toAnalyzeMeansWithinSubtype$Histology1=="GBM"),]$dissimilarityMean
-  Astro <- toAnalyzeMeansWithinSubtype[which(toAnalyzeMeansWithinSubtype$Histology1=="Astro"),]$dissimilarityMean
-  Oligo <- toAnalyzeMeansWithinSubtype[which(toAnalyzeMeansWithinSubtype$Histology1=="Oligo"),]$dissimilarityMean
-  print('GBM vs Astro')
-  print(wilcox.test(GBM,Astro))
-  print('GBM vs Oligo')
-  print(wilcox.test(GBM,Oligo))
-  print('Astro vs Oligo')
-  print(wilcox.test(Astro,Oligo))
+  IDH_Mut <- toAnalyzeMeansWithinSubtype[which(toAnalyzeMeansWithinSubtype$IDH_Mut1==1 & toAnalyzeMeansWithinSubtype$patientRelationship == relationship),]$dissimilarityMean
+  IDH_WT <- toAnalyzeMeansWithinSubtype[which(toAnalyzeMeansWithinSubtype$IDH_Mut1==0 & toAnalyzeMeansWithinSubtype$patientRelationship == relationship),]$dissimilarityMean
+  print('IDH_mut vs IDH_wt')
+  print(wilcox.test(IDH_Mut,IDH_WT, alternative='less'))
 }
 
 ## Also look at purity by subtype (can toggle between fold and difference), and further by if they are inter or intra
