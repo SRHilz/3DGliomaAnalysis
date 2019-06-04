@@ -11,12 +11,12 @@ library(RColorBrewer)
 library(ggplot2)
 
 #Functions
-ensmblRoot <- function(ensmblID){
-  return(strsplit(as.character(ensmblID),'[.]')[[1]][1])
+pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
+  return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
 }
 
 # User-defined variables
-tag <- 'SID000004_20190529_first_submission'
+tag <- 'SID000004'
 outfolder <- 'SID000004_rnaseq_expression_distances_intra_inter/'
 CPMFile <- paste0(dataPath,'SID000003_20190529_first_submission.symbol.coding.CPMs.csv')
 
@@ -29,6 +29,10 @@ data <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
 
 # read in patient + tumor data file
 subtypedata <- read.table(patientTumorDataFile, sep='\t', header = T, stringsAsFactors = F)
+
+# create color key by patient from subtype folder
+colorKey <- subtypedata$Color
+names(colorKey) <- subtypedata$Patient
 
 # merge by patient ID
 merged <- merge(data, subtypedata, by="Patient")
@@ -166,47 +170,6 @@ for (relationship in unique(toAnalyzeMeansWithinSubtype$patientRelationship)){
   print(wilcox.test(IDH_Mut,IDH_WT, alternative='less'))
 }
 
-## Also look at purity by subtype (can toggle between fold and difference), and further by if they are inter or intra
-ggplot(toAnalyzeMeansWithinSubtype, aes(x=Histology1, y=purityFold, fill=patientRelationship)) +
-  geom_boxplot(position=position_dodge(0.8)) +
-  scale_fill_manual(values=c("gray28","gray72"))+
-  labs(list(y = "Fold difference in purity") )+
-  theme(axis.text.x = element_text(size=20, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 20), axis.text.y = element_text(size=20, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
-
-# correlate patient purity with dissimilarity
-## plot for each patient
-toAnalyzeWithin <- toAnalyze[which(toAnalyze$relationship == 'intra'),]
-ggplot(toAnalyzeWithin, aes(purityDistance, dissimilarity)) +
-  geom_point(aes(colour=Patient1)) +
-  labs(list(y = "Expression dissimilarity", x = "Difference in purity") )+
-  theme(axis.text.x = element_text(size=20, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 20), axis.text.y = element_text(size=20, color="black"), panel.background = element_rect(fill = 'white', colour = 'black')) +
-  geom_smooth(aes(colour=factor(Patient1)), method = "lm", se=F) 
-
-## do stat test for purity with dissimilarity
-patients <- unique(toAnalyzeWithin$patient)
-colors <- rainbow(length(patients))
-dataText <- data.frame(p=numeric(), R=numeric(), label=character(), x=numeric(), y=numeric(),m=numeric(), b=numeric(), color=character(), patient=character(), stringsAsFactors=F)
-x = 0 #where on the x axis will display p value
-y=40
-for (i in rev(seq_along(patients))){
-  patientID=as.character(patients[i])
-  print(patientID)
-  color <- colors[i]
-  patientSubset <- toAnalyzeWithin[which(toAnalyzeWithin$patient == patientID),]
-  testResult <- cor.test(patientSubset$purityDifference, patientSubset$dissimilarity, method="pearson")
-  p=formatC(testResult$p.value,format = "e", digits = 2)
-  R=round(testResult$estimate,3)
-  lmResult <- lm(patientSubset$dissimilarity~patientSubset$purityDifference)
-  m <- round(coef(lmResult)["patientSubset$distance"],2)
-  b <- round(coef(lmResult)["(Intercept)"],2)
-  label <- paste0('p=',p,', R=',R,', y = ',m,'x + ',b)
-  dataText <- rbind(dataText, c(p,R,label,x,y,m,b,color,patientID), stringsAsFactors=F)
-  y <- y + 1.5
-}
-colnames(dataText) <- c('p','R','label','x','y','m','b','color','patient')
-dataText$x <- as.numeric(dataText$x)
-dataText$y <- as.numeric(dataText$y)
-
 # create a data structure that also contains distance to do some correlations with
 toAnalyzeWithinDistance <- toAnalyze[which(toAnalyze$relationship == 'intra' & !is.na(toAnalyze$L.Coordinate1)),]
 patientArray <- data.frame(patient=character(), dissimilarity=numeric(), distance=numeric(), purityDifference=numeric(), stringsAsFactors=F)
@@ -224,20 +187,21 @@ for (p in unique(toAnalyzeWithinDistance$Patient1)){
     patientArray <- rbind(patientArray, data.frame(patient=p, dissimilarity=dissimilarity, distance=distance, purityDifference=purityDifference, stringsAsFactors = F))
   }
 }
+patientsToDrop <- c('P260')
+patientArray <- patientArray[which(!(patientArray$patient %in% patientsToDrop)),]
 ## plot for each patient (can change dissimilarity "Spatial distance (mm)" to purityDifference)
-unique(patientArray$patient) %in% patientsToUse #check
-patientArray$patient <- factor(patientArray$patient, levels=patientsToUse)
-colors <- as.character(colorKey[patientsToUse])
+unique(patientArray$patient) %in% patientOrderRec #check
+patientOrderRNAseq <- patientOrderRec[patientOrderRec %in% unique(patientArray$patient)]
+patientArray$patient <- factor(patientArray$patient, levels=patientOrderRNAseq)
+colors <- as.character(colorKey[patientOrderRNAseq])
 ggplot(patientArray, aes(x=distance, y=dissimilarity, color=patient)) +
-  geom_point() +
+  geom_point(size=.5) +
   scale_colour_manual(values=colors) +
   labs(list(x = "Spatial distance (mm)", y = "Dissimilarity") )+
-  theme(axis.text.x = element_text(size=20, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 20), axis.text.y = element_text(size=20, color="black"), panel.background = element_rect(fill = 'white', colour = 'black')) +
-  geom_smooth(aes(colour=factor(patient)), method = "lm", se=F) 
+  theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank()) +
+  geom_smooth(aes(colour=factor(patient)), method = "lm", se=F, size=.5)
 
-
-
-## Do stat test for distinct mutations
+## Do stat test for whether distance is significantly correlated with dissimilarity
 patients <- unique(patientArray$patient)
 colors <- rainbow(length(patients))
 dataText <- data.frame(p=numeric(), R=numeric(), label=character(), x=numeric(), y=numeric(),m=numeric(), b=numeric(), color=character(), patient=character(), stringsAsFactors=F)
@@ -261,39 +225,7 @@ for (i in rev(seq_along(patients))){
 colnames(dataText) <- c('p','R','label','x','y','m','b','color','patient')
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
-
-## purity with distance from periph move to purity section
-mergedSM <- merged[which(merged$SampleType=="SM" & merged$Patient %in% patientsToUse & !is.na(merged$DistCentroid)),]
-patients <- as.character(unique(mergedSM$Patient))
-mergedSM$Patient <- factor(mergedSM$Patient, levels=patientsToUse)
-colors <- as.character(colorKey[patientsToUse])
-ggplot(mergedSM, aes(x=DistPeriph, y=purity, color=Patient)) +
-  geom_point() +
-  scale_colour_manual(values=colors) +
-  labs(list(x = "Dist. Periph", y = "CCF") )+
-  theme(axis.text.x = element_text(size=20, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 20), axis.text.y = element_text(size=20, color="black"), panel.background = element_rect(fill = 'white', colour = 'black')) +
-  geom_smooth(aes(colour=factor(Patient)), method = "lm", se=F) 
+write.table(dataText, file=paste0(outputPath,outfolder,tag,'spatial_distance_vs_dissimilarity_stats.txt'),sep='\t', quote=F, row.names = F)
 
 
-## Do stat test for purity vs centroid or periph
-dataText <- data.frame(p=numeric(), R=numeric(), label=character(), x=numeric(), y=numeric(),m=numeric(), b=numeric(), color=character(), patient=character(), stringsAsFactors=F)
-x = 0 #where on the x axis will display p value
-y=40
-for (i in rev(seq_along(patients))){
-  patientID=as.character(patients[i])
-  print(patientID)
-  color <- colors[i]
-  patientSubset <- mergedSM[which(mergedSM$Patient == patientID),]
-  testResult <- cor.test(patientSubset$DistPeriph, patientSubset$purity, method="pearson")
-  p=formatC(testResult$p.value,format = "e", digits = 2)
-  R=round(testResult$estimate,3)
-  lmResult <- lm(patientSubset$purity~patientSubset$DistPeriph)
-  m <- round(coef(lmResult)["patientSubset$distance"],2)
-  b <- round(coef(lmResult)["(Intercept)"],2)
-  label <- paste0('p=',p,', R=',R,', y = ',m,'x + ',b)
-  dataText <- rbind(dataText, c(p,R,label,x,y,m,b,color,patientID), stringsAsFactors=F)
-  y <- y + 1.5
-}
-colnames(dataText) <- c('p','R','label','x','y','m','b','color','patient')
-dataText$x <- as.numeric(dataText$x)
-dataText$y <- as.numeric(dataText$y)
+
