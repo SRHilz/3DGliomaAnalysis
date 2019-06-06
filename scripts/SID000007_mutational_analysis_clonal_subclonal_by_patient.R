@@ -239,6 +239,7 @@ ggplot(data = ratio2toPlot, aes(x = patient, y = value, fill = variable)) +
   scale_fill_manual(values = colors) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size=20), axis.title = element_text(size = 20), axis.text.y = element_text(size=20), panel.background = element_rect(fill = 'white', colour = 'black'))
 
+par(mfrow=c(1,3))
 ## Barchart subclonal
 toPlot <- categoryPerPatient$subclonal
 names(toPlot) <- categoryPerPatient$patient
@@ -251,21 +252,21 @@ toPlot <- categoryPerPatient$clonal
 names(toPlot) <- categoryPerPatient$patient
 toPlot <- toPlot[patientsToUse]
 par(las=2)
-barplot(toPlot, ylab= 'Number of clonal mutations', col='#4379BD')
+barplot(toPlot, ylab= 'Number of tumor-wide mutations', col='#18BCE8',ylim=c(0,150))
 
 ## Barchart shared
 toPlot <- categoryPerPatient$shared
 names(toPlot) <- categoryPerPatient$patient
 toPlot <- toPlot[patientsToUse]
 par(las=2)
-barplot(toPlot, ylab= 'Number of shared mutations', col='#BF2026')
+barplot(toPlot, ylab= 'Number of shared mutations', col='#EA9D15',ylim=c(0,150))
 
 ## Barchart private
 toPlot <- categoryPerPatient$private
 names(toPlot) <- categoryPerPatient$patient
 toPlot <- toPlot[patientsToUse]
 par(las=2)
-barplot(toPlot, ylab= 'Number of private mutations', col='#069547')
+barplot(toPlot, ylab= 'Number of private mutations', col='#9DC105', ylim=c(0,150))
 
 ## Barchart meanCCF
 toPlot <- categoryPerPatient$meanCCF
