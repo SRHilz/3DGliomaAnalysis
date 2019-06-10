@@ -15,13 +15,13 @@ pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
 }
 
+# read in config file info
+source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
+
 # User-defined variables
 tag <- 'SID000004'
 outfolder <- 'SID000004_rnaseq_expression_distances_intra_inter/'
 CPMFile <- paste0(dataPath,'SID000003_20190529_first_submission.symbol.coding.CPMs.csv')
-
-# read in config file info
-source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 ## Get sample metadata
 # read in sample data file
@@ -88,19 +88,24 @@ toAnalyze[which(toAnalyze$purityFold < 1),]$purityFold <- 1/toAnalyze[which(toAn
 toAnalyze$relationship <- 'inter'
 toAnalyze[which(toAnalyze$Patient1 == toAnalyze$Patient2),]$relationship <- 'intra'
 
-# Designate inter-intra patient combinations 
+# Designate inter-intra patient combinations
 toAnalyze$patientCombination <- paste0(toAnalyze$Patient1,'-',toAnalyze$Patient2)
 
 # Designate inter molecular combination categories
 toAnalyze$interType <- NA
 toAnalyze[which(toAnalyze$relationship == 'inter'),]$interType <- paste0(toAnalyze[which(toAnalyze$relationship == 'inter'),]$IDH_Mut1, '-', toAnalyze[which(toAnalyze$relationship == 'inter'),]$IDH_Mut2)
 
+# Drop comparisons between the same sample
+toAnalyze <- toAnalyze[toAnalyze$sample1!=toAnalyze$sample2,]
+
 # Calculate means for each intra- or inter-patient comparison
-toAnalyzeMeans <- data.frame(Patient1=character(), 
-                             Patient2=character(), 
+toAnalyzeMeans <- data.frame(Patient1=character(),
+                             Patient2=character(),
                              IDH_Mut1=character(),
                              IDH_Mut2=character(),
                              dissimilarityMean=numeric(),
+                             purityMean1=numeric(),
+                             purityMean2=numeric(),
                              purityDifference=numeric(),
                              purityFold=numeric())
 for (c in unique(toAnalyze$patientCombination)){
@@ -114,11 +119,15 @@ for (c in unique(toAnalyze$patientCombination)){
   purityDifference <- mean(toAnalyzeC$purityDifference)
   purityFold <- mean(toAnalyzeC$purityFold)
   dissimilarityMean <- mean(toAnalyzeC$dissimilarity)
-  toAnalyzeMeans <- rbind(toAnalyzeMeans,data.frame(Patient1=Patient1, 
+  purityMean1 <- mean(mergedSubset[mergedSubset$Patient==Patient1,]$purity)
+  purityMean2 <- mean(mergedSubset[mergedSubset$Patient==Patient2,]$purity)
+  toAnalyzeMeans <- rbind(toAnalyzeMeans,data.frame(Patient1=Patient1,
                                      Patient2=Patient2,
                                      IDH_Mut1=IDH_Mut1,
                                      IDH_Mut2=IDH_Mut2,
                                      dissimilarityMean=dissimilarityMean,
+                                     purityMean1=purityMean1,
+                                     purityMean2=purityMean2,
                                      purityDifference=purityDifference,
                                      purityFold=purityFold
                                      ))
@@ -183,7 +192,7 @@ for (p in unique(toAnalyzeWithinDistance$Patient1)){
     distance <- pairwiseDist2pointsLPS(Sample1LPS,Sample2LPS)
     purityDifference <- toAnalyzeWithinDistanceLocalP[c,]$purityDifference
     names(distance) <- "distance"
-    dissimilarity <- toAnalyzeWithinDistanceLocalP[c,]$dissimilarity 
+    dissimilarity <- toAnalyzeWithinDistanceLocalP[c,]$dissimilarity
     patientArray <- rbind(patientArray, data.frame(patient=p, dissimilarity=dissimilarity, distance=distance, purityDifference=purityDifference, stringsAsFactors = F))
   }
 }
@@ -228,4 +237,56 @@ dataText$y <- as.numeric(dataText$y)
 write.table(dataText, file=paste0(outputPath,outfolder,tag,'spatial_distance_vs_dissimilarity_stats.txt'),sep='\t', quote=F, row.names = F)
 
 
+
+
+## Plot mean purity vs mean dissimilarity
+
+# Get list of unique patient pairings by selecting an arbitrary 'direction'
+selectedComboDirections = c()
+for (p1 in unique(toAnalyzeMeans$Patient1)){
+  for (p2 in unique(toAnalyzeMeans$Patient1)){
+    combo = paste0(p1,'_',p2)
+    reverseCombo = paste0(p2,'_',p1)
+    if (!reverseCombo%in%selectedComboDirections){
+      selectedComboDirections = c(selectedComboDirections,combo)
+    }
+  }
+}
+
+# Select these unique pairs from the degenerate dataframe
+toAnalyzeMeansUnique = toAnalyzeMeans[paste0(toAnalyzeMeans$Patient1,'_',toAnalyzeMeans$Patient2)%in%selectedComboDirections,]
+
+# Make mean purity vs mean dissimilarity scatterplot
+ggplot(toAnalyzeMeansUnique[(toAnalyzeMeansUnique$subtypeRelationship=='within'),], aes(x = (purityMean1+purityMean2)/2, y = dissimilarityMean, color = factor(IDH_Mut1) , shape=patientRelationship ))+
+  geom_point()+
+  geom_smooth(method=lm,se=F) +
+  xlab("Mean CCF") +
+  ylab("Mean dissimilarity")+
+  scale_color_manual(values=c("#000000",'#fd0006'),labels=c("IDH-mut","IDH-wt,\n7g10I"))+
+  scale_shape_manual(values=c(17, 19))+
+  theme(legend.title = element_blank())+
+  theme(legend.text.align =0.5)
+
+
+# Do stat test for whether dissimilarity is significantly correlated with mean purity
+dissimilarityPurityStats = data.frame(patientRelationship = character(),
+                                      IDH.Mut =  character(),
+                                      p = numeric(),
+                                      R = numeric())
+for (pr in c('inter', 'intra')){
+  for (idh_mut in c(0,1)){
+    toAnalyzeMeans_subset = toAnalyzeMeansUnique[(toAnalyzeMeansUnique$subtypeRelationship=='within') &
+                                             (toAnalyzeMeansUnique$patientRelationship==pr) &
+                                             (toAnalyzeMeansUnique$IDH_Mut1==idh_mut),]
+    testResult <- cor.test((toAnalyzeMeans_subset$purityMean1+toAnalyzeMeans_subset$purityMean2)/2, toAnalyzeMeans_subset$dissimilarityMean, method="pearson")
+    p=round(testResult$p.value,3)
+    R=round(testResult$estimate[['cor']],3)
+    dissimilarityPurityStats = rbind(dissimilarityPurityStats, data.frame(patientRelationship = pr,
+                                                                          IDH.Mut =  idh_mut,
+                                                                          R,
+                                                                          p))
+  }
+}
+
+write.table(dissimilarityPurityStats, file=paste0(outputPath,outfolder,tag,'purity_vs_dissimilarity_stats.txt'),sep='\t', quote=F, row.names = F)
 
