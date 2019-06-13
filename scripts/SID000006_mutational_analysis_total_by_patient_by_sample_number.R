@@ -246,7 +246,7 @@ ggplot(mutTotalPerSampleSubset, aes(x=n, y=mutsSubclonal, color=patientID)) +
   # this first part makes the data labels with p value and R2
 mutTotalPerSampleSubset$meanDistance <- as.numeric(mutTotalPerSampleSubset$meanDistance)
 mutTotalPerSampleSubsetUsableN <- mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$n %in% c(2:7)),]
-dataText <- data.frame(n=character(), p=numeric(), R=numeric(), label=character(), x=numeric(), y=numeric(), color=character(), patient=character(), stringsAsFactors=F)
+dataText <- data.frame(n=character(), p=numeric(), R=numeric(), x=numeric(), y=numeric(), color=character(), patient=character(), stringsAsFactors=F)
 x = 0 #where on the x axis will display p value
 for (n in unique(mutTotalPerSampleSubsetUsableN$n)){
   print(n)
@@ -267,20 +267,26 @@ for (n in unique(mutTotalPerSampleSubsetUsableN$n)){
       p=NA
       R=NA
     }
-    label <- paste0('p=',p,', R=',R)
-    dataText <- rbind(dataText, c(n,p,R,label,x,y,color,patient), stringsAsFactors=F)
+    dataText <- rbind(dataText, c(n,p,R,x,y,color,patient), stringsAsFactors=F)
     y <- y + 5
   }
 }
-colnames(dataText) <- c('n','p','R','label','x','y','color','patient')
+colnames(dataText) <- c('n','p','R','x','y','color','patient')
+dataText$adj.p <- NA
+for (n in unique(dataText$n)){
+  dataTextNSubset.index <- which(dataText$n == n & !is.na(dataText$p))
+  dataText[dataTextNSubset.index,]$adj.p <- p.adjust(dataText[dataTextNSubset.index,]$p, method = "BH", n = length(dataText[dataTextNSubset.index,]$p))
+}
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
+dataText$label <- paste0('p=',dataText$adj.p,', R=',dataText$R)
+write.table(dataText, file=paste0(outputPath,outfolder,'SID000006_mutsSubclonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
 # plot
 ggplot(mutTotalPerSampleSubsetUsableN, aes(x=meanDistance, y=mutsSubclonal, color=patientID)) +
   geom_point(aes(shape=patientID)) +
   scale_colour_manual(values=colors) +
   scale_shape_manual(values=shapes) +
-  theme(axis.text.x = element_text(size=20, colour='black'), axis.title = element_text(size = 20), axis.text.y = element_text(size=20, colour='black'), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=15), legend.title=element_text(size=15))+
+  theme(axis.text.x = element_text(size=10, colour='black'), axis.title = element_text(size = 10), axis.text.y = element_text(size=10, colour='black'), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=10), legend.title=element_text(size=10))+
   facet_wrap(vars(n)) +
   geom_smooth(method=lm,se=FALSE, fullrange=TRUE) +
   geom_text(
@@ -289,6 +295,7 @@ ggplot(mutTotalPerSampleSubsetUsableN, aes(x=meanDistance, y=mutsSubclonal, colo
     hjust   = -0.01,
     colour=dataText$color
   )
+
 
 # now make plots showing the relationship between p value (from correlation above) and n
 dataText$patient <- factor(dataText$patient, levels=patientsToUse)
@@ -351,17 +358,8 @@ ggplot(mutSubclonalMeanPerPatientPerN, aes(x=n, y=mutsSubclonalMean, group=patie
   geom_line(aes(colour = patientID)) +
   scale_colour_manual(values=colors) +
   scale_shape_manual(values=shapes) +
-  geom_errorbar(aes(ymin=mutsSubclonalMean-mutsSubclonalSD, ymax=mutsSubclonalMean+mutsSubclonalSD), width=.2, position=position_dodge(0.05))+
-  theme(axis.text.x = element_text(size=20), axis.title = element_text(size = 20), axis.text.y = element_text(size=20), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=15), legend.title=element_text(size=15))
-  
-
-ggplot(mutSubclonalMeanPerPatientPerN, aes(x=n, y=mutsSubclonalMin, group=patientID)) +
-  geom_point(aes(shape=patientID, colour=patientID)) +
-  geom_line(aes(colour = patientID)) +
-  scale_colour_manual(values=colors) +
-  scale_shape_manual(values=shapes) +
-  theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank()) +
-
+  geom_errorbar(aes(ymin=mutsSubclonalMean-mutsSubclonalSD, ymax=mutsSubclonalMean+mutsSubclonalSD), width=.2, position=position_dodge(0.05)) +
+  theme(axis.text.x = element_text(size=10, color="black"),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank())
 
 # create a new data structure which will just have the average clonal for each n per pateint
 mutClonalMeanPerPatientPerN <- data.frame(patientID=character(),
@@ -369,6 +367,7 @@ mutClonalMeanPerPatientPerN <- data.frame(patientID=character(),
                                              mutsClonalMean=numeric(),
                                              mutsClonalMin=numeric(),
                                              mutsClonalMax=numeric(),
+                                             mutsClonalSD=numeric(),
                                              stringsAsFactors=FALSE) 
 mutTotalPerSampleSubset$n <- as.numeric(as.character(mutTotalPerSampleSubset$n))
 for (patientID in patientsToUse){
@@ -377,6 +376,7 @@ for (patientID in patientsToUse){
   for (n in 1:k){
     print(n)
     mutsClonalMean <- mean(mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$patientID == patientID & mutTotalPerSampleSubset$n == n),]$mutsClonal)
+    mutsClonalSD <- sd(mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$patientID == patientID & mutTotalPerSampleSubset$n == n),]$mutsClonal)
     if (n > 1 & n < k){
       mutsClonalMin <- mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$patientID == patientID & mutTotalPerSampleSubset$n == n & mutTotalPerSampleSubset$tag == 'distMin'),]$mutsClonal
       mutsClonalMax <- mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$patientID == patientID & mutTotalPerSampleSubset$n == n & mutTotalPerSampleSubset$tag == 'distMax'),]$mutsClonal
@@ -384,10 +384,10 @@ for (patientID in patientsToUse){
       mutsClonalMin <- mutsClonalMean
       mutsClonalMax <- mutsClonalMean
     }
-    mutClonalMeanPerPatientPerN <- rbind.data.frame(mutClonalMeanPerPatientPerN, c(patientID, n, mutsClonalMean, mutsClonalMin, mutsClonalMax), stringsAsFactors = F)
+    mutClonalMeanPerPatientPerN <- rbind.data.frame(mutClonalMeanPerPatientPerN, c(patientID, n, mutsClonalMean, mutsClonalMin, mutsClonalMax, mutsClonalSD), stringsAsFactors = F)
   }
 }
-colnames(mutClonalMeanPerPatientPerN) <- c('patientID','n','mutsClonalMean','mutsClonalMin','mutsClonalMax')
+colnames(mutClonalMeanPerPatientPerN) <- c('patientID','n','mutsClonalMean','mutsClonalMin','mutsClonalMax', 'mutsClonalSD')
 mutTotalPerSampleSubset$n <- factor(as.character(mutTotalPerSampleSubset$n), levels = order(unique(as.integer(mutTotalPerSampleSubset$n))))
 
 ## plot to see how many samples are needed to know what is clonal
@@ -396,13 +396,15 @@ mutClonalMeanPerPatientPerN$patientID <- factor(as.character(mutClonalMeanPerPat
 mutClonalMeanPerPatientPerN$mutsClonalMean <- as.numeric(mutClonalMeanPerPatientPerN$mutsClonalMean)
 mutClonalMeanPerPatientPerN$mutsClonalMin <- as.numeric(mutClonalMeanPerPatientPerN$mutsClonalMin)
 mutClonalMeanPerPatientPerN$mutsClonalMax <- as.numeric(mutClonalMeanPerPatientPerN$mutsClonalMax)
+mutClonalMeanPerPatientPerN$mutsClonalSD <- as.numeric(mutClonalMeanPerPatientPerN$mutsClonalSD)
 
-ggplot(mutClonalMeanPerPatientPerN, aes(x=n, y=mutsClonalMean, group=patientID)) +
+ggplot(mutClonalMeanPerPatientPerN, aes(x=n, y=mutsClonalMean, group=patientID, colour=patientID)) +
   geom_point(aes(shape=patientID, colour=patientID)) +
   geom_line(aes(colour = patientID)) +
   scale_colour_manual(values=colors) +
   scale_shape_manual(values=shapes) +
-  theme(axis.text.x = element_text(size=20), axis.title = element_text(size = 20), axis.text.y = element_text(size=20), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=15), legend.title=element_text(size=15))
+  geom_errorbar(aes(ymin=mutsClonalMean-mutsClonalSD, ymax=mutsClonalMean+mutsClonalSD), width=.2, position=position_dodge(0.05)) +
+  theme(axis.text.x = element_text(size=10, color="black"),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank())
 
 ## Clonal by number of samples plot for each n relationship with distance
 # this first part makes the data labels with p value and R2
@@ -435,6 +437,13 @@ for (n in unique(mutTotalPerSampleSubsetUsableN$n)){
   }
 }
 colnames(dataText) <- c('n','p','R','label','x','y','color','patient')
+dataText$adj.p <- NA
+for (n in unique(dataText$n)){
+  dataTextNSubset.index <- which(dataText$n == n & !is.na(dataText$p))
+  dataText[dataTextNSubset.index,]$adj.p <- p.adjust(dataText[dataTextNSubset.index,]$p, method = "BH", n = length(dataText[dataTextNSubset.index,]$p))
+}
+dataText$label <- paste0('p=',dataText$adj.p,', R=',dataText$R)
+write.table(dataText, file=paste0(outputPath,outfolder,tag,'_mutsClonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
 # plot
@@ -442,7 +451,7 @@ ggplot(mutTotalPerSampleSubsetUsableN, aes(x=meanDistance, y=mutsClonal, color=p
   geom_point(aes(shape=patientID)) +
   scale_colour_manual(values=colors) +
   scale_shape_manual(values=shapes) +
-  theme(axis.text.x = element_text(size=15, colour='black'), axis.title = element_text(size = 15), axis.text.y = element_text(size=15, colour='black'), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=15), legend.title=element_text(size=15))+
+  theme(axis.text.x = element_text(size=10, colour='black'), axis.title = element_text(size = 10), axis.text.y = element_text(size=10, colour='black'), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=10), legend.title=element_text(size=10))+
   facet_wrap(vars(n)) +
   geom_smooth(method=lm,se=FALSE, fullrange=TRUE) +
   geom_text(
@@ -466,7 +475,7 @@ mutClonalMeanPerPatientPerNDiffCalc$type <- 'LGG'
 mutClonalMeanPerPatientPerNDiffCalc[which(mutClonalMeanPerPatientPerNDiffCalc$patientID %in% HGGSamples),]$type <- 'HGG'
 mutClonalMeanPerPatientPerNDiffCalc$type <- factor(mutClonalMeanPerPatientPerNDiffCalc$type, levels=c("LGG","HGG"))
 toPlot <- mutClonalMeanPerPatientPerNDiffCalc[which(mutClonalMeanPerPatientPerNDiffCalc$n %in% 1:6),]
-ggplot(toPlot, aes(x=n, y=diffPercent, fill=type)) +
+ggplot(toPlot, aes(x=n, y=diff, fill=type)) +
   geom_boxplot(position=position_dodge()) +
   scale_fill_manual(values=colorsType) +
   theme(axis.text.x = element_text(size=20), axis.title = element_text(size = 20), axis.text.y = element_text(size=20), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=15), legend.title=element_text(size=15))
