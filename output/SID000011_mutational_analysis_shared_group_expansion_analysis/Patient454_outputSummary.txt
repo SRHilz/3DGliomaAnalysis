@@ -1,0 +1,17 @@
+cluster	threshold	meanDistanceWithin	meanDistanceRandom	p	n	samples
+1	0.1	23.0003413018155	20.18890241121	0.64	2	Primary-v10,Primary-v2
+1	0.05	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+1	0.01	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+1	0.001	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+2	0.1	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+2	0.05	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+2	0.01	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+2	0.001	20.18890241121	20.18890241121	1	8	Primary-v1,Primary-v10,Primary-v2,Primary-v3,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+3	0.1	25.2059524056244	20.18890241121	0.99	4	Primary-v1,Primary-v10,Primary-v5,Primary-v7
+3	0.05	23.3411940781672	20.18890241121	0.96	5	Primary-v1,Primary-v10,Primary-v4,Primary-v5,Primary-v7
+3	0.01	22.7281571259172	20.18890241121	1	6	Primary-v1,Primary-v10,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+3	0.001	22.7281571259172	20.18890241121	1	6	Primary-v1,Primary-v10,Primary-v4,Primary-v5,Primary-v6,Primary-v7
+4	0.1	15.5899889098131	20.18890241121	0.13	4	Primary-v2,Primary-v3,Primary-v4,Primary-v6
+4	0.05	15.5899889098131	20.18890241121	0.13	4	Primary-v2,Primary-v3,Primary-v4,Primary-v6
+4	0.01	15.5899889098131	20.18890241121	0.13	4	Primary-v2,Primary-v3,Primary-v4,Primary-v6
+4	0.001	15.5899889098131	20.18890241121	0.13	4	Primary-v2,Primary-v3,Primary-v4,Primary-v6
