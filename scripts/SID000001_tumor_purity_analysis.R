@@ -62,6 +62,12 @@ molType <- molType[patientOrderSplit]
 
 # plot boxplot
 boxplot(merged$purity~merged$Patient, col = 'grey72', ylab = 'Estimated CCF', las='2')
+mergedSM <- merged[which(merged$SampleType == 'SM'),]
+mergednonSM <- merged[which(merged$SampleType == 'non-SM'),]
+stripchart(mergedSM$purity~mergedSM$Patient, vertical = TRUE, 
+           method = "jitter", add = TRUE, pch = 20, col = c('#363795'), cex=.5)
+stripchart(mergednonSM$purity~mergednonSM$Patient, vertical = TRUE, 
+           method = "jitter", add = TRUE, pch = 17, col = c('#E05828'), cex=.5)
 
 # get out grade by patient 
 grade <- unique(merged[,c('Patient','Grade')])$Grade
@@ -92,7 +98,7 @@ pairwiseWithinPatient <- data.frame(patient=character(),
                                    purity_difference=integer(),
                                    stringsAsFactors=FALSE) 
 merged$Patient <- as.character(merged$Patient)
-merged[which(merged$Patient=='P260-l' | merged$Patient=='P260-m'),]$Patient <- 'P260'
+#merged[which(merged$Patient=='P260-l' | merged$Patient=='P260-m'),]$Patient <- 'P260' #comment this out to keep P260 unsplit by aspect; this cannot be commented out to generate the correlation plots, can be to generate the pairwise distance boxplots
 patientsSM <- as.character(unique(merged[which(!is.na(merged$L.Coordinate)),]$Patient))
 for (patientID in patientsSM){
   print(patientID)
@@ -123,6 +129,24 @@ ggplot(pairwiseWithinPatient, aes(x=meanDistance, y=purityDifference, color=pati
   labs(list(x = "Spatial distance (mm)", y = "CCF Difference") )+
   theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank()) +
   geom_smooth(aes(colour=factor(patientID)), method = "lm", se=F, size=.5)
+
+## Distribution of distances between samples
+patientOrderToPlot <- patientOrderSplit[patientOrderSplit %in% unique(pairwiseWithinPatient$patientID)]
+pairwiseWithinPatient$patientID <- factor(pairwiseWithinPatient$patientID, levels=patientOrderToPlot)
+patientOrderToPlot <- gsub('P260-l','P260',patientOrderToPlot)
+patientOrderToPlot <- gsub('P260-m','P260',patientOrderToPlot)
+colors <- as.character(colorKey[patientOrderToPlot])
+ggplot(pairwiseWithinPatient, aes(x=patientID, y=meanDistance)) +
+  geom_violin(scale="width", adjust=1.5, size=0.5, fill='grey72', draw_quantiles=TRUE) +
+  geom_dotplot(binaxis='y', stackdir='center', binwidth=1, dotsize=.5) +
+  scale_fill_manual(values=colors) +
+  scale_y_continuous(limits = c(0, 70)) +
+  labs(list(y = "Pairwise Distance (mm)") )+
+  theme(axis.text.x = element_text(size=10, color="black", angle=90),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
+
+violin(pairwiseWithinPatient$meanDistance~pairwiseWithinPatient$patientID, col = 'grey72', ylab = 'Pairwise distance (mm)', las='2')
+stripchart(pairwiseWithinPatient$meanDistance~pairwiseWithinPatient$patientID, vertical = TRUE, 
+           method = "jitter", add = TRUE, pch = 20, col = c('#363795'), cex=.5)
 
 ## Do stat test for whether distance is significantly correlated with purity
 patients <- unique(pairwiseWithinPatient$patientID)
