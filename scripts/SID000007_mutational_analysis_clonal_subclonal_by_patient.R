@@ -188,24 +188,29 @@ for (p in patientsToUse){
   meanCCF <- mean(merged[which(merged$Patient == p),]$purity)
   
   # finally also calculate average distance among samples (can only do if SM)
-  if (requireSM){
-    meanDistanceToAverage <- c()
-    for (c in 1:ncol(combinations)){
-      samplesForCombo <- combinations[,c]
-      coordinates <- merged[which(merged$sample_type %in% samplesForCombo & merged$Patient==p),c('L.Coordinate','P.Coordinate','S.Coordinate')]
-      exomeDistanceMatrix <- as.matrix(dist(coordinates, method = "euclidean"))
-      meanDistance <- mean(exomeDistanceMatrix[lower.tri(exomeDistanceMatrix)])
-      meanDistanceToAverage <- append(meanDistanceToAverage, meanDistance)
-    }
+  meanDistanceToAverage <- c()
+  for (c in 1:ncol(combinations)){
+    samplesForCombo <- combinations[,c]
+    coordinates <- merged[which(merged$sample_type %in% samplesForCombo & merged$Patient==p),c('L.Coordinate','P.Coordinate','S.Coordinate')]
+    exomeDistanceMatrix <- as.matrix(dist(coordinates, method = "euclidean"))
+    meanDistance <- mean(exomeDistanceMatrix[lower.tri(exomeDistanceMatrix)], na.rm=TRUE)
+    meanDistanceToAverage <- append(meanDistanceToAverage, meanDistance)
     meanDistanceAverage <- mean(meanDistanceToAverage)
-  } else {
-    meanDistanceAverage <- NA
   }
     
   # add to patient-level information about type of mutation data frame
   categoryPerPatient_Local <- data.frame(patient=p,clonal=clonal,shared=shared,private=private, distance=meanDistanceAverage, meanCCF=meanCCF)
   categoryPerPatient <- rbind(categoryPerPatient, categoryPerPatient_Local)
 }
+
+## Create boxplot of average distance among samples
+barplot(categoryPerPatient$distance, names.arg = categoryPerPatient$patient, las=2, ylab="Average pairwisde distance (mm)", col='black')
+
+## Create boxplot of absolute tumor-wide in IDH-wt vs IDH-mut
+IDHwt <- categoryPerPatient[which(categoryPerPatient$patient %in% c('P413','P454')),]#excluding 452 bc hypermutated
+IDHmut <- categoryPerPatient[which(!categoryPerPatient$patient %in% c('P413','P454','P452')),]
+boxplot(IDHmut$clonal, IDHwt$clonal, names=c('IDH-mut','IDH-wt'), col='grey', ylab="Absolute tumor-wide mutations per patient")
+wilcox.test(IDHwt$clonal, IDHmut$clonal)
 
 ## Clonal, shared, and private per patient plot
 categoryPerPatient$patient <- factor(categoryPerPatient$patient, levels = patientsToUse)
