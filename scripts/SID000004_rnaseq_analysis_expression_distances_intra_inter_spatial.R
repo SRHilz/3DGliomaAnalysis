@@ -22,6 +22,7 @@ source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications
 tag <- 'SID000004'
 outfolder <- 'SID000004_rnaseq_expression_distances_intra_inter/'
 CPMFile <- paste0(dataPath,'SID000003_20190529_first_submission.symbol.coding.CPMs.csv')
+purityCutoff <- .7 #only used for subset of analyses
 
 ## Get sample metadata
 # read in sample data file
@@ -61,8 +62,11 @@ correlation <- cor(loggedNrmCountMatrix, method="pearson")
 dissimilarity <- (1 - correlation)/2
 
 # Separation in to inter intra pairs
-dissimilarityPairs <- melt(dissimilarity)
+dissimilarityToMelt <- dissimilarity
+dissimilarityToMelt[lower.tri(dissimilarityToMelt, diag=T)] <- NA #do this to ensure do not get duplicate comparisons or self-self comparisons
+dissimilarityPairs <- melt(dissimilarityToMelt)
 colnames(dissimilarityPairs) <- c('sample1','sample2','dissimilarity')
+dissimilarityPairs <- dissimilarityPairs[!is.na(dissimilarityPairs$dissimilarity),]
 
 # Add in patient info
 mergedSubset1 <- mergedSubset
@@ -95,8 +99,8 @@ toAnalyze$patientCombination <- paste0(toAnalyze$Patient1,'-',toAnalyze$Patient2
 toAnalyze$interType <- NA
 toAnalyze[which(toAnalyze$relationship == 'inter'),]$interType <- paste0(toAnalyze[which(toAnalyze$relationship == 'inter'),]$IDH_Mut1, '-', toAnalyze[which(toAnalyze$relationship == 'inter'),]$IDH_Mut2)
 
-# Drop comparisons between the same sample
-toAnalyze <- toAnalyze[toAnalyze$sample1!=toAnalyze$sample2,]
+# Save file with data
+write.table(toAnalyze, file=paste0(outputPath,outfolder, 'SID000004_pairwise_metrics_expression_dissimilarity.txt'), sep = '\t', row.names = F, quote=F)
 
 # Calculate means for each intra- or inter-patient comparison
 toAnalyzeMeans <- data.frame(Patient1=character(),
@@ -139,8 +143,13 @@ toAnalyzeMeans[which(toAnalyzeMeans$IDH_Mut1 == toAnalyzeMeans$IDH_Mut2),]$subty
 toAnalyzeMeans$IDH_Mut1 <- factor(toAnalyzeMeans$IDH_Mut1, levels=c(1,0))
 toAnalyzeMeans$IDH_Mut2 <- factor(toAnalyzeMeans$IDH_Mut2, levels=c(1,0))
 
-# Reformat into matrix to look at heatmap
-meanDissimilarityMatrix <- acast(toAnalyzeMeans[,c('Patient1','Patient2','dissimilarityMean')], Patient1 ~ Patient2, value.var="dissimilarityMean")
+# Reformat into matrix (including adding back in lower tri just to get it to plot; won't affect original toAnalyzeMeans which does not ) to look at heatmap
+toAnalyzeMeansFlipFlop <- toAnalyzeMeans[which(!toAnalyzeMeans$Patient1 == toAnalyzeMeans$Patient2),]
+colnames(toAnalyzeMeansFlipFlop)[1] <- 'Patient2'
+colnames(toAnalyzeMeansFlipFlop)[2] <- 'Patient1'
+toAnalyzeMeansFlipFlop <- toAnalyzeMeansFlipFlop[,c(2,1,seq(3,11,1))]
+toAnalyzeMeansToCast <- rbind(toAnalyzeMeans, toAnalyzeMeansFlipFlop)
+meanDissimilarityMatrix <- acast(toAnalyzeMeansToCast[,c('Patient1','Patient2','dissimilarityMean')], Patient1 ~ Patient2, value.var="dissimilarityMean")
 meanDissimilarityMatrix <- meanDissimilarityMatrix[,match(rownames(meanDissimilarityMatrix),colnames(meanDissimilarityMatrix))]
 patientOrder <- as.character(colnames(meanDissimilarityMatrix))
 annotationData <- subtypedata[,c('IDH_Mut','X1p19q','X7gain10loss','Tumor')]
@@ -178,7 +187,6 @@ for (relationship in unique(toAnalyzeMeansWithinSubtype$patientRelationship)){
   print('IDH_mut vs IDH_wt')
   print(wilcox.test(IDH_Mut,IDH_WT, alternative='less'))
 }
-
 # create a data structure that also contains distance to do some correlations with
 toAnalyzeWithinDistance <- toAnalyze[which(toAnalyze$relationship == 'intra' & !is.na(toAnalyze$L.Coordinate1)),]
 patientArray <- data.frame(patient=character(), dissimilarity=numeric(), distance=numeric(), purityDifference=numeric(), stringsAsFactors=F)
@@ -186,24 +194,46 @@ for (p in unique(toAnalyzeWithinDistance$Patient1)){
   print(p)
   p <- as.character(p)
   toAnalyzeWithinDistanceLocalP <- toAnalyzeWithinDistance[which(toAnalyzeWithinDistance$Patient1==p),]
+  tumorType <- unique(as.character(toAnalyzeWithinDistanceLocalP$Tumor1))
   for (c in 1:nrow(toAnalyzeWithinDistanceLocalP)){
     Sample1LPS <- toAnalyzeWithinDistanceLocalP[c,c("L.Coordinate1","P.Coordinate1","S.Coordinate1")]
     Sample2LPS <- toAnalyzeWithinDistanceLocalP[c,c("L.Coordinate2","P.Coordinate2","S.Coordinate2")]
+    samples <- paste0(toAnalyzeWithinDistanceLocalP[c,'sample1'],',',toAnalyzeWithinDistanceLocalP[c,'sample2'])
     distance <- pairwiseDist2pointsLPS(Sample1LPS,Sample2LPS)
     purityDifference <- toAnalyzeWithinDistanceLocalP[c,]$purityDifference
+    if (toAnalyzeWithinDistanceLocalP[c,'purity1'] >= purityCutoff & toAnalyzeWithinDistanceLocalP[c,'purity2'] >= purityCutoff){
+      purityStatus <- 'highCCF'
+    } else {
+      purityStatus <- 'lowCCF'
+    }
     names(distance) <- "distance"
     dissimilarity <- toAnalyzeWithinDistanceLocalP[c,]$dissimilarity
-    patientArray <- rbind(patientArray, data.frame(patient=p, dissimilarity=dissimilarity, distance=distance, purityDifference=purityDifference, stringsAsFactors = F))
+    patientArray <- rbind(patientArray, data.frame(patient=p, samples=samples, tumorType=tumorType, dissimilarity=dissimilarity, distance=distance, purityDifference=purityDifference, purityStatus=purityStatus, stringsAsFactors = F))
   }
 }
-patientsToDrop <- c('P260')
+patientArray <- patientArray[which(!is.na(patientArray$distance)),]
+## normalize by distance and plot by patient
+patientArray$normedDissimilarity <- patientArray$dissimilarity/patientArray$distance
+patientsToDrop <- c('P260','P452')
 patientArray <- patientArray[which(!(patientArray$patient %in% patientsToDrop)),]
-## plot for each patient (can change dissimilarity "Spatial distance (mm)" to purityDifference)
 unique(patientArray$patient) %in% patientOrderRec #check
 patientOrderRNAseq <- patientOrderRec[patientOrderRec %in% unique(patientArray$patient)]
 patientArray$patient <- factor(patientArray$patient, levels=patientOrderRNAseq)
 colors <- as.character(colorKey[patientOrderRNAseq])
-ggplot(patientArray, aes(x=distance, y=dissimilarity, color=patient)) +
+boxplot(patientArray$normedDissimilarity~patientArray$patient, col=colors, las=2, ylab='Distance-normalized expression dissimilarity (((1-R)/2)/mm)')
+patientArrayHighCCF <- patientArray[which(patientArray$purityStatus == 'highCCF'),]
+patientOrderRNAseq <- patientOrderRec[patientOrderRec %in% unique(patientArrayHighCCF$patient)]
+patientArrayHighCCF$patient <- factor(patientArrayHighCCF$patient, levels=patientOrderRNAseq)
+colors <- as.character(colorKey[patientOrderRNAseq])
+boxplot(patientArrayHighCCF$normedDissimilarity~patientArrayHighCCF$patient, col=colors, las=2, ylab='Distance-normalized expression dissimilarity (((1-R)/2)/mm)')
+patientMeans <- aggregate(patientArrayHighCCF$normedDissimilarity, by=list(patient=patientArrayHighCCF$patient), mean)
+colnames(patientMeans) <- c('patient','normed_dissimilarity_means')
+patientMeans$tumorType <- 'Primary'
+patientMeans[which(patientMeans$patient %in% unique(patientArrayHighCCF[which(patientArrayHighCCF$tumorType=='Recurrence1'),]$patient)),]$tumorType <- 'Recurrent'
+wilcox.test(patientMeans$normed_dissimilarity_means~patientMeans$tumorType, alternative='less')
+boxplot(patientMeans$normed_dissimilarity_means~patientMeans$tumorType, col='grey', ylab='Mean normalized expression dissimilarity')
+## plot for each patient (can change dissimilarity "Spatial distance (mm)" to purityDifference)
+ggplot(patientArrayHighCCF, aes(x=distance, y=dissimilarity, color=patient)) +
   geom_point(size=.5) +
   scale_colour_manual(values=colors) +
   labs(list(x = "Spatial distance (mm)", y = "Dissimilarity") )+
