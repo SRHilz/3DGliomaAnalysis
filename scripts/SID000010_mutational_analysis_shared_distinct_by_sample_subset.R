@@ -164,10 +164,12 @@ for (patientID in patientsToUse){
   }
 }
 
-## Normalize difference by distance
+## Normalize difference by distance and output to file
 callsPerSampleSubset$normedDifference <- callsPerSampleSubset$snvs_different / callsPerSampleSubset$spatial_distance
 colors <- as.character(colorKey[gsub('Patient','P',unique(callsPerSampleSubset$patient))])
 boxplot(callsPerSampleSubset$normedDifference~callsPerSampleSubset$patient, col=colors, las=2, ylab='Distance-normalized genetic difference (#SNVs/mm)')
+write.table(callsPerSampleSubset, file=paste0(outputPath,outfolder, 'SID000010_pairwise_metrics_genetic_distance.txt'), sep = '\t', row.names = F, quote=F)
+
 ## Do stat test for distinct mutations
 dataText <- data.frame(p=numeric(), R=numeric(), x=numeric(), y=numeric(),m=numeric(), b=numeric(), color=character(), patient=character(), stringsAsFactors=F)
 x = 0 #where on the x axis will display p value
@@ -199,15 +201,15 @@ write.table(dataText, file=paste0(outputPath,outfolder,'SID000010_pairwise_genet
 
 ## Do stats for Primary vs Recurrent mean snvs_different
 patientMeans <- aggregate(callsPerSampleSubset$normedDifference, by=list(patient=callsPerSampleSubset$patient), mean)
-colnames(patientMeans) <- c('patient','snvs_different_means')
+colnames(patientMeans) <- c('patient','normedDifference_means')
 patientVariance <- aggregate(callsPerSampleSubset$normedDifference, by=list(patient=callsPerSampleSubset$patient), var)
-colnames(patientVariance) <- c('patient','snvs_different_variance')
+colnames(patientVariance) <- c('patient','normedDifference_variance')
 patientMeans<- merge(patientVariance,patientMeans, by='patient')
 patientMeans$tumorType <- 'Primary'
 patientMeans[which(patientMeans$patient %in% unique(callsPerSampleSubset[which(callsPerSampleSubset$tumorType=='Recurrence1'),]$patient)),]$tumorType <- 'Recurrent'
-wilcox.test(patientMeans$snvs_different_means~patientMeans$tumorType, alternative='less')
-wilcox.test(patientMeans$snvs_different_var~patientMeans$tumorType)
-boxplot(patientMeans$snvs_different_means~patientMeans$tumorType, col='grey', ylab='Mean normalized genetic difference')
+wilcox.test(patientMeans$normedDifference_means~patientMeans$tumorType, alternative='less')
+wilcox.test(patientMeans$normedDifference_var~patientMeans$tumorType)
+boxplot(patientMeans$normedDifference_means~patientMeans$tumorType, col='grey', ylab='Mean normalized genetic difference')
 
 ## Do multiple regression on distance vs snvs
 fit <- lm(snvs_different ~ spatial_distance + patient, data=callsPerSampleSubset)
