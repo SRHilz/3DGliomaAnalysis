@@ -112,13 +112,9 @@ calcSampleCenters <- function(orderedSubdirectories){
   sampleCenteredXYZ <- c()
   for (i in 1:length(orderedSubdirectories)){
     print(paste('Processing ',orderedSubdirectories[i],sep=''))
-    if (is.null(names)){
-      splitname <- strsplit(orderedSubdirectories[i],'/') %>% unlist
-      name <- splitname[length(splitname)]
-      name <- strsplit(name,'\\.')[1] %>% unlist
-    } else {
-      name <- names[i]
-    }
+    splitname <- strsplit(orderedSubdirectories[i],'/') %>% unlist
+    name <- splitname[length(splitname)]
+    name <- gsub('sample','',name)
     sampleDicom <- readDICOM(orderedSubdirectories[i], recursive = FALSE, exclude = NULL, verbose = TRUE)
     sampleNifti <- dicom2nifti(sampleDicom,datatype=4, mode="integer")
     sampleNifti@.Data <- correctOrientation(sampleNifti@.Data)
@@ -220,8 +216,8 @@ calcDistancesCentroid <- function(samplePoints, centroid){
 }
 
 # Specify patient and load the config file for that patient. Config file contains paths to imaging files + ordering of samples + sample names + colors
-patientID <- 'Patient453'
-sf <- "sf11690"
+patientID <- 'Patient340'
+sf <- "sf11055"
 source(paste('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Data/',patientID,'/ConfigFiles/configImagingData.R',sep=''))
 
 # Explore a scan (user should edit this as they wish to explore different dicom files)
@@ -232,7 +228,7 @@ image(toExplore)
 orthographic(toExplore, xyz=c(90,120,50))#x moves saggital R->L, y coronal P->A, z axial I -> S; so 0,0,0 is RPI
 
 # Plot background of brain and tumor
-plotTemplate(brainDicoms,tumorDicoms,showBrain=T) 
+plotTemplate(brainDicoms,tumorDicoms,showBrain=F) 
 
 # Add in resection cavity (optional)
 addCavity(cavityDicoms, tumorDicoms, trim=FALSE)
