@@ -5,12 +5,15 @@
 library(reshape2)
 library(ggplot2)
 library(dplyr)
+library(RColorBrewer)
 
 # define file paths
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 path <- '/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Projects/2016_LoglioExomeAnalysis/Data/'
 cnFile <- paste0(dataPath, 'Patient260.GeneCopyNumber.rds')
 cpmFile <- paste0(dataPath, 'SID000003_20190529_first_submission.symbol.coding.CPMs.csv')
+ssgseaInput <-  paste0(dataPath,'Patient260_ssGSEA_results.txt')
+ciberSortFile <- paste0(dataPath, '20190529_first_submission.symbol.coding.CPMs.CIBERSORT.Output_Job8.txt')
 mutfile <- paste0(dataPath, 'Patient260.R.mutations.avf.txt')
 PDGFRA_lateral_id <- 'PDGFRA_chr4_55133815_C_A'
 PDGFRA_medial_id <- 'PDGFRA_chr4_55138638_G_T'
@@ -108,5 +111,74 @@ boxplot(PTENcn[lateral_high_purity],PTENcn[medial_high_purity], col=c('blue','re
 boxplot(PTENcpm[lateral_high_purity],PTENcpm[medial_high_purity], col=c('blue','red'))
 wilcox.test(PTENcpm[lateral_high_purity],PTENcpm[medial_high_purity])
 
+# create ssgsea pathway plot for MTOR and ERK
+ssgsea <- read.table(ssgseaInput, row.names=1, header=T, sep='\t')
+rownames(ssgsea) <- gsub('X','v', rownames(ssgsea))
+ofInterest <- c('REACTOME_MTORC1_MEDIATED_SIGNALLING',
+                'REACTOME_PROLONGED_ERK_ACTIVATION_EVENTS')
+ssgsea <- ssgsea[samplesToPlot,]
+toPlot <- ssgsea[,colnames(ssgsea) %in% ofInterest]
+colnames(toPlot)[which(colnames(toPlot)=='REACTOME_MTORC1_MEDIATED_SIGNALLING')] <- 'MTOR Sig.'
+colnames(toPlot)[which(colnames(toPlot)=='REACTOME_PROLONGED_ERK_ACTIVATION_EVENTS')] <- 'ERK Actv.'
+heatmap.2(t(toPlot), trace="none", Colv=F, col=brewer.pal(9,"YlGn"), cexRow=.5)
+toPlotGG <- toPlot
+toPlotGG$sample <- rownames(toPlotGG)
+toPlotGG$aspect <- 'lateral'
+toPlotGG[which(toPlotGG$sample %in% medial_high_purity),]$aspect <- 'medial'
+toPlotGG <- melt(toPlotGG)
+colnames(toPlotGG) <- c('sample','aspect','pathway','score')
+ggplot(toPlotGG, aes(x=pathway, y=score, fill=aspect)) +
+  geom_boxplot(position=position_dodge(0.8)) +
+  scale_fill_manual(values=c("blue","red"))+
+  labs(list(y = "Enrichment score") )+
+  theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
+for (p in unique(toPlotGG$pathway)){
+  print(paste0('test for lateral vs medial for pathway: ' , p))
+  toPlotGGPathway <- toPlotGG[which(toPlotGG$pathway == p),]
+  scoreLateral <- toPlotGGPathway[which(toPlotGGPathway$aspect == 'lateral'),]$score
+  print(scoreLateral)
+  scoreMedial <- toPlotGGPathway[which(toPlotGGPathway$aspect == 'medial'),]$score
+  print(scoreMedial)
+  if (p == 'MTOR Sig.'){
+    print(ks.test(scoreMedial, scoreLateral, alternative = 'less'))
+  } else {
+    print(ks.test(scoreLateral, scoreMedial, alternative = 'less'))
+  }
+}
 
+# create immune cell plot for immune cell enrichment differences
+## Read in Cibersort results  
+cibersortResults <- read.table(ciberSortFile, sep='\t', header=T)
+## Add in patient tags
+cibersortResults$Patient <- substr(cibersortResults$Input.Sample, 1, 4)
+cibersortResults[cibersortResults$Patient %in% c("P41V","P41Y","P41P","P41G"),]$Patient <- "P41"
+## Pull out P260
+cibersortResults260 <- cibersortResults[which(cibersortResults$Patient == 'P260'),]
+## Fix sample names
+cibersortResults260$Input.Sample <- gsub('P260','',cibersortResults260$Input.Sample)
+rownames(cibersortResults260) <- cibersortResults260$Input.Sample
+## Remove low-purity samples
+cibersortResults260 <- cibersortResults260[samplesToPlot,]
+## Pull out interesting columns
+ofInterest <- c('Input.Sample','B.cells.naive','T.cells.CD8','T.cells.CD4.memory.resting','T.cells.regulatory..Tregs.','Macrophages.M0')
+cibersortResults260 <- cibersortResults260[,ofInterest]
+## Reshape and plot
+toPlot <- melt(cibersortResults260, id.vars='Input.Sample')
+colnames(toPlot) <- c('sample','cellType','score')
+toPlot$aspect <- 'lateral'
+toPlot[which(toPlot$sample %in% medial_high_purity),]$aspect <- 'medial'
+ggplot(toPlot, aes(x=cellType, y=score, fill=aspect)) +
+  geom_boxplot(position=position_dodge(0.5), width=0.5) +
+  scale_fill_manual(values=c("blue","red"))+
+  labs(list(y = "Enrichment score") )+
+  theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
+for (p in unique(toPlot$cellType)){
+  print(paste0('test for lateral vs medial for pathway: ' , p))
+  toPlotCellType <- toPlot[which(toPlot$cellType == p),]
+  scoreLateral <- toPlotCellType[which(toPlotCellType$aspect == 'lateral'),]$score
+  print(scoreLateral)
+  scoreMedial <- toPlotCellType[which(toPlotCellType$aspect == 'medial'),]$score
+  print(scoreMedial)
+  print(ks.test(scoreLateral, scoreMedial))
+}
 
