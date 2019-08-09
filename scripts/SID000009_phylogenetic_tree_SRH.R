@@ -42,7 +42,7 @@ getEdgeCount <- function(df){
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 ## File I/O setup
-patientID <- 'Patient260'
+patientID <- 'Patient452'
 avfFile <- paste0(patientID,'.R.mutations.avf.txt')
 avfPath <- paste0(dataPath,avfFile)
 outfolder <- 'SID000009_phylogenetic_tree/'
