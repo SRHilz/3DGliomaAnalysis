@@ -193,21 +193,10 @@ getMutsBin <- function(avfile){ #from Tali's phylo tree code, pulls out all cove
   return(muts.bin)
 }
 
-getCensusGeneAnnotation <- function(genes){
-  cancerCensusGenesFile <- '/Users/srhilz/Documents/Professional/Positions/UCSF_Costello/Data/GeneLists/cancer_gene_census.csv'
-  censusGenes <- read.csv(cancerCensusGenesFile)
-  cancerGeneAnnotationDF <- as.data.frame(genes)
-  cancerGeneAnnotationDF$Tier <- 0
-  tier2Genes <- censusGenes[which(censusGenes$Tier=='2'),]$Gene.Symbol
-  tier1Genes <- censusGenes[which(censusGenes$Tier=='1'),]$Gene.Symbol
-  if (any(cancerGeneAnnotationDF$genes %in% tier2Genes)){
-    cancerGeneAnnotationDF[cancerGeneAnnotationDF$genes %in% tier2Genes,]$Tier <- 2
-  }
-  if (any(cancerGeneAnnotationDF$genes %in% tier1Genes)){
-    cancerGeneAnnotationDF[cancerGeneAnnotationDF$genes %in% tier1Genes,]$Tier <- 1
-  }
-  return(cancerGeneAnnotationDF$Tier)
-}
+
+
+# user-defined cutoffs
+purityCutoff <- 0.7
 
 # read in config file info
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
@@ -221,6 +210,25 @@ cancerCensusGenesPath <- paste0(dataPath,'cancer_gene_census.csv')
 # read in cluster mean data
 sciClone <- read.table(sciCloneClusterFile,sep='\t', header=T, stringsAsFactors = F, row.names=1)
 colnames(sciClone) <- gsub('Primary.','',colnames(sciClone))
+
+my_palette <- colorRampPalette(c("blue","red"))(n = 299)
+
+heatmap.2(as.matrix(sciClone),
+          dendrogram = 'column',
+          Rowv=FALSE,
+          trace='none',
+          col=my_palette
+          )
+
+# reformat data for plotting
+meltedSciClone <- sciClone
+meltedSciClone$cluster <- rownames(meltedSciClone)
+meltedSciClone <- melt(meltedSciClone, id.vars="cluster")
+colnames(meltedSciClone) <- c('cluster','sample','meanVAF')
+meltedSciClone$cluster <- as.factor(meltedSciClone$cluster)
+
+ggplot(meltedSciClone, aes(x = sample, y = meanVAF, fill = cluster)) +
+  geom_bar(stat="identity", position=position_dodge()) 
 
 par(mfrow=c(1,1), mar=rep(4,4))
 colors <- rainbow(nrow(sciClone))
@@ -305,7 +313,7 @@ highPuritySamples <- as.character(merged[which(merged$Patient == patient_ID),]$s
 colnames(sciClone) <- gsub('v','Primary-v',colnames(sciClone))
 sciCloneToCompare <- sciClone[,highPuritySamples]
 
-# create a distance matrix
+# create a distance matrix (pairwise distance in mm between samples)
 coordinates <- merged[which(merged$Patient==patient_ID),c('L.Coordinate','P.Coordinate','S.Coordinate')]
 rownames(coordinates) <- merged[which(merged$Patient==patient_ID),'sample_type']
 exomeDistanceMatrix <- as.matrix(dist(coordinates, method = "euclidean"))
@@ -345,9 +353,19 @@ ggplot(data = outputRandom, aes(y=meanDistance, x=cluster, fill = threshold)) +
   geom_boxplot(position="dodge") + 
   geom_point(data=outputSummary, aes(y=meanDistanceWithin, x=cluster, size=4), position=position_dodge(width=0.8), color='red', shape=17) +
   scale_fill_manual(values=thresholdColors) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=20), axis.title = element_text(size = 20), axis.text.y = element_text(size=20), panel.background = element_rect(fill = 'white', colour = 'black'))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size=10, color='black'), axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
 saveRDS(outputSummary, file=paste0(outputPath, outfolder, patientID,'_outputSummary'))
 write.table(outputSummary, file=paste0(outputPath, outfolder, patientID,'_outputSummary.txt'), quote=F,sep='\t', row.names=F)
+# simple plot with single threshold
+toPlotFinalSingleThresh <- outputSummary[which(outputSummary$threshold == 0.05),]
+toPlotFinalSingleThresh <- toPlotFinalSingleThresh[which(!(toPlotFinalSingleThresh$n == 1 | toPlotFinalSingleThresh$n == length(highPuritySamples))),]
+toPlotFinalSingleThresh$difference <- toPlotFinalSingleThresh$meanDistanceWithin - toPlotFinalSingleThresh$meanDistanceRandom
+ggplot(data = toPlotFinalSingleThresh, aes(x=cluster, y=difference))+
+  ylim(-7,5)+
+  geom_bar(stat="identity", fill='grey')+
+  theme(axis.text.x = element_text(size=10, angle=90, hjust=1, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+
+
 
 # get colors for vaf plotting (note - this part requires the vafs object to already exist from above for the correct patient - these colors can be fed into periphery.R to automate visualization, or entered manually into Slicer)
 # note - I typically use #DADEDF (218 222 223) to designate samples that are excluded from the analysis
