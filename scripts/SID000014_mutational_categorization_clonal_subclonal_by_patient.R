@@ -4,6 +4,8 @@
 #   subclonal in that patient for a specified number of samples that 
 #   meet a specified minimum tumor purity.
 
+## Important note- Patient454 sample8 (v8) was excluded as upon phylogenetic analysis it did not contain mutations found in all other samples
+
 library(ggplot2)
 library(kableExtra)
 library(reshape)
@@ -108,6 +110,9 @@ merged <- merged[which(merged$purity >= purityCutoff),]
 kable(table(merged$Patient)) %>%
         kable_styling(bootstrap_options = c("striped", "hover")) %>%
         row_spec(0, bold=TRUE, background = "#C2BFBA")
+
+# drop any samples excluded after manual inspection of phylogenetic trees
+merged <- merged[which(!(merged$Patient=='P454' & merged$SampleName == 'v8')),]
 
 # Remove patients with less than the required number of high-CCF samples and reinspect
 for (p in unique(merged$Patient)){
