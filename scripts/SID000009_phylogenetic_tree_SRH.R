@@ -42,7 +42,7 @@ getEdgeCount <- function(df){
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 ## File I/O setup
-patientID <- 'Patient452'
+patientID <- 'Patient450'
 avfFile <- paste0(patientID,'.R.mutations.avf.txt')
 avfPath <- paste0(dataPath,avfFile)
 outfolder <- 'SID000009_phylogenetic_tree/'
@@ -117,7 +117,7 @@ for(rowID in 1:nrow(muts.bin)) {
 		muts.final[newrow, 11] <- names(muts.bin)[colID]
 	}
 }
-patID <- strsplit(strsplit(infile, "/")[[1]][length(strsplit(infile, "/")[[1]])], "\\.")[[1]][1]
+patID <- gsub('Patient','P',patientID)
 muts.final$patient_ID <- patID
 muts.final$uniqueID <- makeLongID(muts.final$gene,muts.final$contig,muts.final$position, muts.final$ref_allele, muts.final$alt_allele)
 muts.final <- transform(muts.final, mut_freq = ave(seq(nrow(muts.final)), uniqueID, FUN=length))
