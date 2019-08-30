@@ -91,123 +91,55 @@ TukeyHSD(aov(summary$medians~summary$molType))
 # look at variance for medians by subtype
 aggregate(summary[,'medians'], list(summary$molType), var)
 
-## look at difference in purity as it relates to spatial distance
-pairwiseWithinPatient <- data.frame(patient=character(),
-                                   samples=character(),
-                                   spatial_distance=integer(),
-                                   purity_difference=integer(),
-                                   stringsAsFactors=FALSE) 
-merged$Patient <- as.character(merged$Patient)
-#merged[which(merged$Patient=='P260-l' | merged$Patient=='P260-m'),]$Patient <- 'P260' #comment this out to keep P260 unsplit by aspect; this cannot be commented out to generate the correlation plots, can be to generate the pairwise distance boxplots
-patientsSM <- as.character(unique(merged[which(!is.na(merged$L.Coordinate)),]$Patient))
-for (patientID in patientsSM){
-  print(patientID)
-  samples <- as.character(merged[which(merged$Patient == patientID & !is.na(merged$L.Coordinate)),]$SampleName)
-  print(samples)
-  combinations <- combn(samples, 2) #will just have one column if using all samples
-  for (c in 1:ncol(combinations)){
-    samplesForCombo <- combinations[,c]
-    print(samplesForCombo)
-    sample_a <- samplesForCombo[1]
-    sample_b <- samplesForCombo[2]
-    samplesForComboOut <- paste0(samplesForCombo, collapse=',')
-    coordinates <- merged[which(merged$SampleName %in% samplesForCombo & merged$Patient==patientID),c('L.Coordinate','P.Coordinate','S.Coordinate')]
-    exomeDistanceMatrix <- as.matrix(dist(coordinates, method = "euclidean"))
-    meanDistance <- mean(exomeDistanceMatrix[lower.tri(exomeDistanceMatrix)])
-    purity_a <- merged[which(merged$SampleName==sample_a & merged$Patient==patientID),]$purity
-    purity_b <- merged[which(merged$SampleName==sample_b & merged$Patient==patientID),]$purity
-    purityDifference <- abs(purity_a-purity_b)
-    pairwiseWithinPatient <- rbind(pairwiseWithinPatient, data.frame(patientID, samplesForComboOut, meanDistance,purityDifference))
-  }
+# enhancing vs non-enhancing
+mergedWithE <- merged[which(!is.na(merged$MREnhancementWithContrast)),]
+mergedWithE$MREnhancementWithContrast <- factor(mergedWithE$MREnhancementWithContrast, levels=unique(mergedWithE$MREnhancementWithContrast))
+ggplot(data=mergedWithE, aes(x=Patient, y=purity, fill=MREnhancementWithContrast)) +
+  geom_boxplot(position=position_dodge(1))
+
+# pull out mean clonal VAF info for each sample
+vafs <- read.table(paste0(outputPath,'/SID000014_mutational_categorization_clonal_subclonal_by_patient/SID000014_vafs.txt'), sep='\t', header=T, stringsAsFactors = F)
+snvCategories <- read.table(paste0(outputPath,'/SID000014_mutational_categorization_clonal_subclonal_by_patient/SID000014_0p3_min_purity_2_min_samples_snv_categories.txt'), sep='\t', header=T, stringsAsFactors=F)
+toPlot <- data.frame(sampleID=character(),
+                                meanTumorWideVAFs=numeric(),
+                                patient=character(),
+                                purity=numeric(),
+                                PurityEstUsed=character(),
+                                stringsAsFactors = F)
+for (p in unique(snvCategories$patient)){
+  print(p)
+  tumorWideSNVs <- snvCategories[which(snvCategories$patient == p & snvCategories$category == 'tumor-wide'),]$snvs
+  tumorWideVafsForPatient <- vafs[which(vafs$patient == p & vafs$SNVuniqueID %in% tumorWideSNVs),]
+  meanTumorWideVafsForPatient <- aggregate(tumorWideVafsForPatient[,'vaf'], by=list(tumorWideVafsForPatient$sampleID), mean)
+  colnames(meanTumorWideVafsForPatient) <- c('sample_type','meanTumorWideVAFs')
+  meanTumorWideVafsForPatient$patient <- p
+  print(meanTumorWideVafsForPatient)
+  #merge with purity info
+  purityForPatient <- merged[which(merged$Patient == p),c('sample_type','purity','PurityEstUsed')]
+  meanTumorWideVafsForPatientMerged <- merge(meanTumorWideVafsForPatient, purityForPatient, by='sample_type')
+  toPlot <- rbind(toPlot, meanTumorWideVafsForPatientMerged)
 }
-patientOrderToPlot <- patientOrderRec[patientOrderRec %in% unique(pairwiseWithinPatient$patientID)]
-colors <- as.character(colorKey[patientOrderToPlot])
-pairwiseWithinPatient$patientID <- factor(pairwiseWithinPatient$patientID, levels=patientOrderToPlot)
-ggplot(pairwiseWithinPatient, aes(x=meanDistance, y=purityDifference, color=patientID)) +
-  geom_point(size=.5) +
-  scale_colour_manual(values=colors) +
-  labs(list(x = "Spatial distance (mm)", y = "CCF Difference") )+
-  theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank()) +
-  geom_smooth(aes(colour=factor(patientID)), method = "lm", se=F, size=.5)
+toPlot$x2_meanTumorWideVAFs <- 2*toPlot$meanTumorWideVAFs
 
-## Distribution of distances between samples
-patientOrderToPlot <- patientOrderSplit[patientOrderSplit %in% unique(pairwiseWithinPatient$patientID)]
-pairwiseWithinPatient$patientID <- factor(pairwiseWithinPatient$patientID, levels=patientOrderToPlot)
-patientOrderToPlot <- gsub('P260-l','P260',patientOrderToPlot)
-patientOrderToPlot <- gsub('P260-m','P260',patientOrderToPlot)
-colors <- as.character(colorKey[patientOrderToPlot])
-ggplot(pairwiseWithinPatient, aes(x=patientID, y=meanDistance)) +
-  geom_violin(scale="width", adjust=1.5, size=0.5, fill='grey72', draw_quantiles=TRUE) +
-  geom_dotplot(binaxis='y', stackdir='center', binwidth=1, dotsize=.5) +
-  scale_fill_manual(values=colors) +
-  scale_y_continuous(limits = c(0, 70)) +
-  labs(list(y = "Pairwise Distance (mm)") )+
-  theme(axis.text.x = element_text(size=10, color="black", angle=90),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
+## plot purity vs 2x meanVAF
+toPlot$PurityEstUsed <- as.factor(toPlot$PurityEstUsed)
+patients <- patientOrder[patientOrder %in% toPlot$patient]
+toPlot$patient <- factor(toPlot$patient, levels=patients)
+colors <- patients
+toPlot$color <- 'black'
+toPlot[which(toPlot$PurityEstUsed == 'FACETS'),]$color <- 'orange'
+colors <- toPlot[which(toPlot)]
+ggplot(toPlot, aes(x=x2_meanTumorWideVAFs, y=purity)) +
+  geom_point(size=.8) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
+  geom_smooth(method = "lm", se=F, size=.5)+
+  labs(y='tumor purity', x='2 x mean tumor-wide VAFs') +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               label.x.npc = "right", label.y.npc = 0.8, formula = y~x, 
+               parse = TRUE, size = 3) + 
+  stat_fit_glance(method = 'lm',
+                  geom = 'text',
+                  aes(label = paste("P-value = ", signif(..p.value.., digits = 4), sep = "")),
+                  label.x.npc = 'right', label.y.npc = 0.4, size = 3) +
+  facet_wrap(~patient)
 
-violin(pairwiseWithinPatient$meanDistance~pairwiseWithinPatient$patientID, col = 'grey72', ylab = 'Pairwise distance (mm)', las='2')
-stripchart(pairwiseWithinPatient$meanDistance~pairwiseWithinPatient$patientID, vertical = TRUE, 
-           method = "jitter", add = TRUE, pch = 20, col = c('#363795'), cex=.5)
-
-## Do stat test for whether distance is significantly correlated with purity
-patients <- unique(pairwiseWithinPatient$patientID)
-colors <- rainbow(length(patients))
-dataText <- data.frame(p=numeric(), R=numeric(), label=character(), x=numeric(), y=numeric(),m=numeric(), b=numeric(), color=character(), patient=character(), stringsAsFactors=F)
-x = 0 #where on the x axis will display p value
-y=40
-for (i in rev(seq_along(patients))){
-  patientID=as.character(patients[i])
-  print(patientID)
-  color <- colors[i]
-  patientSubset <- pairwiseWithinPatient[which(pairwiseWithinPatient$patientID == patientID),]
-  testResult <- cor.test(patientSubset$meanDistance, patientSubset$purityDifference, method="spearman")
-  p=formatC(testResult$p.value,format = "e", digits = 2)
-  rho=round(testResult$estimate,3)
-  lmResult <- lm(patientSubset$purityDifference~patientSubset$meanDistance)
-  m <- round(coef(lmResult)["patientSubset$meanDistance"],2)
-  b <- round(coef(lmResult)["(Intercept)"],2)
-  label <- paste0('p=',p,', rho=',rho,', y = ',m,'x + ',b)
-  dataText <- rbind(dataText, c(p,rho,label,x,y,m,b,color,patientID), stringsAsFactors=F)
-  y <- y + 1.5
-}
-colnames(dataText) <- c('p','R','label','x','y','m','b','color','patient')
-dataText$x <- as.numeric(dataText$x)
-dataText$y <- as.numeric(dataText$y)
-write.table(dataText, file=paste0(outputPath,outfolder,tag,'spatial_distance_vs_CCF_difference_stats.txt'),sep='\t', quote=F, row.names = F)
-
-## purity with distance from periph (used for purity section analysis)
-mergedToPlot <- merged[which(!is.na(merged$DistCentroid)),]
-patientOrderToPlot <- patientOrderRec[patientOrderRec %in% unique(mergedToPlot$Patient)]
-mergedToPlot$Patient <- factor(mergedToPlot$Patient, levels=patientOrderToPlot)
-colors <- as.character(colorKey[patientOrderToPlot])
-ggplot(mergedToPlot, aes(x=DistPeriph, y=purity, color=Patient)) +
-  geom_point(size=.5) +
-  scale_colour_manual(values=colors) +
-  labs(list(x = "Dist. Periph", y = "CCF") )+
-  theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank()) +
-  geom_smooth(aes(colour=factor(Patient)), method = "lm",size=.5, se=F) 
-
-
-## Do stat test for purity vs centroid or periph
-patients <- unique(mergedToPlot$Patient)
-dataText <- data.frame(p=numeric(), R=numeric(), label=character(), x=numeric(), y=numeric(),m=numeric(), b=numeric(), color=character(), patient=character(), stringsAsFactors=F)
-x = 0 #where on the x axis will display p value
-y=40
-for (i in rev(seq_along(patients))){
-  patientID=as.character(patients[i])
-  print(patientID)
-  color <- colors[i]
-  patientSubset <- mergedToPlot[which(mergedToPlot$Patient == patientID),]
-  testResult <- cor.test(patientSubset$DistPeriph, patientSubset$purity, method="pearson")
-  p=formatC(testResult$p.value,format = "e", digits = 2)
-  rho=round(testResult$estimate,3)
-  lmResult <- lm(patientSubset$purity~patientSubset$DistPeriph)
-  m <- round(coef(lmResult)["patientSubset$DistPeriph"],2)
-  b <- round(coef(lmResult)["(Intercept)"],2)
-  label <- paste0('p=',p,', rho=',rho,', y = ',m,'x + ',b)
-  dataText <- rbind(dataText, c(p,rho,label,x,y,m,b,color,patientID), stringsAsFactors=F)
-  y <- y + 1.5
-}
-colnames(dataText) <- c('p','rho','label','x','y','m','b','color','patient')
-dataText$x <- as.numeric(dataText$x)
-dataText$y <- as.numeric(dataText$y)
-write.table(dataText, file=paste0(outputPath,outfolder,tag,'_distance_periph_vs_purity_difference_stats.txt'),sep='\t', quote=F, row.names = F)
