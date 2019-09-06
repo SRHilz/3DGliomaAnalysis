@@ -1,8 +1,8 @@
 repoPath <- '/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/'
 dataPath <- paste0(repoPath, 'data/')
 outputPath <- paste0(repoPath, 'output/')
-sampleDataFile <- paste0(dataPath,'20190529_SampleData_Tumor_v6.txt')
-patientTumorDataFile <- paste0(dataPath, '20190401_PatientTumorData_v6.txt')
+sampleDataFile <- paste0(dataPath,'20190926_SampleData_Tumor_v7.txt')
+patientTumorDataFile <- paste0(dataPath, '20190926_PatientTumorData_v7.txt')
 patientOrder <- c('P340','P41','P49','P259','P302','P450','P303','P327','P375','P326','P453','P456','P300','P260','P372','P373','P413','P454','P455','P457','P452')
 patientOrderSplit <- c('P340','P41','P49','P259','P302','P450','P303','P327','P375','P326','P453','P456','P300','P260-l','P260-m','P372','P373','P413','P454','P455','P457','P452')
 patientOrderRec <- c('P340','P41','P49','P259','P303','P327','P375','P326','P453','P456','P372','P373','P413','P454','P455','P457','P452','P300','P302','P450','P260')
