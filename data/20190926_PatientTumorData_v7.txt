@@ -1,45 +1,23 @@
-Patient	SurgeryNumber	PatientStudy	Tumor	Histology	IDH_Mut	1p19q	7gain10loss	Grade	AgeAtSampleCollection	Sex	Race	Ethnicity	Treatment	Resection	T2Volume	Color	
-P300	SF10711	3DAtlas	Recurrence1	Astro	1	0	0	2	58	M	Other	Hispanic/Latino	none	STR	11099.086	darkorchid1	
-P303	SF10809	3DAtlas	Primary	Astro	1	0	0	2	38	M	White/Caucasian	Not Hispanic/Latino	none	STR	6283.369	chartreuse	
-P326	SF10832	SupplementalCase	Primary	Astro	1	0	0	2	37	M	White/Caucasian	Not Hispanic/Latino	none	STR	NA	NA	
-P327	SF10932	3DAtlas	Primary	Astro	1	0	0	3	30	F	White/Caucasian	Not Hispanic/Latino	none	GTR	65636.8	mediumseagreen	
-P375	SF11136	3DAtlas	Primary	Astro	1	0	0	2	34	M	White/Caucasian	Hispanic/Latino	none	NTR	172093.32	darkgreen	
-P453	SF11690	3DAtlas	Primary	Astro	1	0	0	2	28	M	White/Caucasian	Not Hispanic/Latino	none	NTR	81937.73	darkolivegreen4	
-P456	SF11904	SupplementalCase	Primary	Astro	1	0	0	3	30	M	White/Caucasian	Not Hispanic/Latino	none	NTR	NA	NA	
-P372	SF11046	3DAtlas	Primary	GBM	0	0	1	4	64	M	White/Caucasian	Not Hispanic/Latino	none	NTR	24007.553	lightpink	
-P373	SF11048	3DAtlas	Primary	GBM	0	0	1	4	71	M	White/Caucasian	Hispanic/Latino	none	NTR	17680.71	salmon4	
-P413	SF11173	3DAtlas	Primary	GBM	0	0	1	4	63	M	White/Caucasian	Not Hispanic/Latino	none	GTR	79110	firebrick4	
-P454	SF11731	3DAtlas	Primary	GBM	0	0	1	4	60	F	White/Caucasian	Not Hispanic/Latino	none	STR	86950.96	red3	
-P260	SF11294	3DAtlas	Recurrence1	GBM	1	0	0	4	28	F	White/Caucasian	Hispanic/Latino	none	NTR	10562.653	mediumpurple1	
-P455	SF11901	3DAtlas	Primary	GBM	x	0	1	4	77	F	White/Caucasian	Not Hispanic/Latino	none	STR	90774.13	orangered	
-P457	SF11915	3DAtlas	Primary	GBM	0	0	1	4	75	M	White/Caucasian	Not Hispanic/Latino	none	NTR	73176.64	hotpink	
-P452	SF11644	3DAtlas	Primary	GBM	0	0	0	4	58	M	Other	Hispanic/Latino	none	NTR	113508.72	darkorange1	
-P41	SF9663	SupplementalCase	Primary	Oligo	1	1	0	2	19	F	White/Caucasian	Hispanic/Latino	none	GTR	23501.36	blue	
-P49	SF9745	SupplementalCase	Primary	Oligo	1	1	0	3	23	M	White/Caucasian	Not Hispanic/Latino	none	STR	102705.96	dodgerblue	
-P302	SF10788	3DAtlas	Recurrence1	Oligo	1	1	0	3	45	F	Other	Hispanic/Latino	XRT	STR	NA	darkmagenta	
+Patient	SurgeryNumber	PatientStudy	Tumor	Histology	IDH_Mut	1p19q	7gain10loss	Grade	AgeAtSampleCollection	Sex	Race	Ethnicity	Treatment	Resection	T2Volume	Color
+P300	SF10711	3DAtlas	Recurrence1	Astro	1	0	0	2	58	M	Other	Hispanic/Latino	none	STR	11099.086	darkorchid1
+P303	SF10809	3DAtlas	Primary	Astro	1	0	0	2	38	M	White/Caucasian	Not Hispanic/Latino	none	STR	6283.369	chartreuse
+P326	SF10832	SupplementalCase	Primary	Astro	1	0	0	2	37	M	White/Caucasian	Not Hispanic/Latino	none	STR	NA	NA
+P327	SF10932	3DAtlas	Primary	Astro	1	0	0	3	30	F	White/Caucasian	Not Hispanic/Latino	none	GTR	65636.8	mediumseagreen
+P375	SF11136	3DAtlas	Primary	Astro	1	0	0	2	34	M	White/Caucasian	Hispanic/Latino	none	NTR	172093.32	darkgreen
+P453	SF11690	3DAtlas	Primary	Astro	1	0	0	2	28	M	White/Caucasian	Not Hispanic/Latino	none	NTR	81937.73	darkolivegreen4
+P456	SF11904	SupplementalCase	Primary	Astro	1	0	0	3	30	M	White/Caucasian	Not Hispanic/Latino	none	NTR	NA	NA
+P372	SF11046	3DAtlas	Primary	GBM	0	0	1	4	64	M	White/Caucasian	Not Hispanic/Latino	none	NTR	24007.553	lightpink
+P373	SF11048	3DAtlas	Primary	GBM	0	0	1	4	71	M	White/Caucasian	Hispanic/Latino	none	NTR	17680.71	salmon4
+P413	SF11173	3DAtlas	Primary	GBM	0	0	1	4	63	M	White/Caucasian	Not Hispanic/Latino	none	GTR	79110	firebrick4
+P454	SF11731	3DAtlas	Primary	GBM	0	0	1	4	60	F	White/Caucasian	Not Hispanic/Latino	none	STR	86950.96	red3
+P260	SF11294	3DAtlas	Recurrence1	GBM	1	0	0	4	28	F	White/Caucasian	Hispanic/Latino	none	NTR	10562.653	mediumpurple1
+P455	SF11901	3DAtlas	Primary	GBM	x	0	1	4	77	F	White/Caucasian	Not Hispanic/Latino	none	STR	90774.13	orangered
+P457	SF11915	3DAtlas	Primary	GBM	0	0	1	4	75	M	White/Caucasian	Not Hispanic/Latino	none	NTR	73176.64	hotpink
+P452	SF11644	3DAtlas	Primary	GBM	0	0	0	4	58	M	Other	Hispanic/Latino	none	NTR	113508.72	darkorange1
+P41	SF9663	SupplementalCase	Primary	Oligo	1	1	0	2	19	F	White/Caucasian	Hispanic/Latino	none	GTR	23501.36	blue
+P49	SF9745	SupplementalCase	Primary	Oligo	1	1	0	3	23	M	White/Caucasian	Not Hispanic/Latino	none	STR	102705.96	dodgerblue
+P302	SF10788	3DAtlas	Recurrence1	Oligo	1	1	0	3	45	F	Other	Hispanic/Latino	XRT	STR	NA	darkmagenta
 P340	SF11055	3DAtlas	Primary	Oligo	1	1	0	2	39	F	White/Caucasian	Not Hispanic/Latino	none	STR	87904.6	steelblue1	
-P259	SF9162	SupplementalCase	Primary	Oligo	1	1	0	2	43	F	Unknown	Not Hispanic/Latino	none	GTR	NA	NA	
-P450	SF11612	3DAtlas	Recurrence1	Oligo	1	1	0	3	67	M	White/Caucasian	Not Hispanic/Latino	none	STR	90647.27	purple4	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
-																	
+P259	SF9162	SupplementalCase	Primary	Oligo	1	1	0	2	43	F	Unknown	Not Hispanic/Latino	none	GTR	NA	NA
+P450	SF11612	3DAtlas	Recurrence1	Oligo	1	1	0	3	67	M	White/Caucasian	Not Hispanic/Latino	none	STR	90647.27	purple4
+

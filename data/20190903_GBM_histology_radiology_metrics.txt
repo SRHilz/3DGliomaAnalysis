@@ -1,0 +1,69 @@
+Patient	SF	SampleName	Target Tumor score	Target percent tumor nuclei	Target Necrosis	Percent necrosis	Target BV hyperplasia	Target Ki67 BTRC Count	Mean Cells per 200X Field	Pathology Comments	MREnhancementWithContrast
+P413	SF11173	v1	3	95	0	0	2	37.78	472		yes
+P413	SF11173	v2	3	75	0	0	1	39.1	423.6	hyalinized BV lg not counted as delicate	yes
+P413	SF11173	v3	3	80	0	0	2	30.66	258.5	hyalinized BV	yes
+P413	SF11173	v4	3	75	0	0	2	31.87	441.3		yes
+P413	SF11173	v5	3	65	0	0	0	18.56	379		yes
+P413	SF11173	v6	3	80	0	0	2	26.62	289.2	PV INFLAMMATION	yes
+P413	SF11173	v7	3	80	0	0	2	24.25	267		yes
+P413	SF11173	v8	3	80	0	0	1	26.15	321.2	PV INFLAMMATION	yes
+P413	SF11173	v9	3	70	0	0	1	29.92	338.6	"PV INFLAMMATION, LYMPHOCYTE CUFFING"	yes
+P413	SF11173	v10	3	80	0	0	0	21.43	385.6	MINERALIZATION	yes
+P454	SF11731	v1	3	85	0	0	1	NA	NA	target is 75% dense tumor and 25% infiltrating cortex	yes
+P454	SF11731	v2	3	90	1	10	2	NA	NA	"Approx 10% necrosis, pseudopallisading"	yes
+P454	SF11731	v3	3	95	0	0	1	NA	NA		yes
+P454	SF11731	v4	3	85	1	25	2	NA	NA	"Partial Georgraphic necrosis, target at edge"	yes
+P454	SF11731	v5	3	85	1	35	1	NA	NA	Pseudopallisading necrosis and partial geographic necrosis	yes
+P454	SF11731	v6	3	95	1	5	2	NA	NA	Pseudopallisading necrosis	yes
+P454	SF11731	v7	3	95	0	0	2	NA	NA		yes
+P454	SF11731	v8	0	0	0	0	0	NA	NA	cortex	yes
+P454	SF11731	v9	2	70	0	0	1	NA	NA	three pieces; 2 nodules dense tumor and one portion if cortex with deep infiltration of tumor	yes
+P454	SF11731	v10	3	95	1	5	1	NA	NA	Pseudopallisading necrosis	yes
+P452	SF11644	v1	3	85	0	0	1	NA	NA	All targets look similar with minor variation	no
+P452	SF11644	v2	3	95	0	0	1	NA	NA		no
+P452	SF11644	v3	3	75	0	0	2	NA	NA	"prom BV, some areas falling apart, edema"	no
+P452	SF11644	v4	3	85	0	0	0	NA	NA		no
+P452	SF11644	v5	3	95	0	0	0	NA	NA		no
+P452	SF11644	v6	2	40	0	0	0	NA	NA		no
+P452	SF11644	v7	3	75	0	0	0	NA	NA		no
+P452	SF11644	v8	3	85	0	0	2	NA	NA		no
+P452	SF11644	v9	3	85	0	0	1	NA	NA		no
+P452	SF11644	v10	3	85	0	0	1	NA	NA		no
+P372	SF11046	v1	0	0	0	0	0	0.7	143.5		yes
+P372	SF11046	v2	3	90	0	0	2	18.04	267.5		yes
+P372	SF11046	v3	NA	0	2	95	NA	1.18	85	ONLY MACROPHAGES AND SERUM PROTEINS+NECROSIS	yes
+P372	SF11046	v4	2	60	0	0	2	19.55	312	"TUMOR REGIONS=2, REGION=3"	yes
+P372	SF11046	v5	3	80	0	10	2	11.37	299	"<10% NECROSIS, PSEUDOPALLISADING"	yes
+P372	SF11046	v6	3	75	1	10	0	13.58	268.75	"NECROSIS, PSEUDOPALLISADING-10%"	yes
+P372	SF11046	v7	3	80	0	0	2	14.33	322.75		yes
+P372	SF11046	v8	0	0	0	0	0	1.06	94	Grey matter cortex	no
+P373	SF11048	v1	3	90	0	0	0	26.34	465.6666667		no
+P373	SF11048	v2	3	1	2	90	1	11.61	304.3333333	Ki67 at edge; 80% NECROSIS	yes
+P373	SF11048	v3	NA-ghosts of solid tumor	0	2	95	NA	13.2	250	98% NECROSIS; PROLIF CELLS FROM BV	yes
+P373	SF11048	v4	3	80	1	15	2	29.23	310.5	15% geographic NECROSIS; HYALINIZED BV	yes
+P373	SF11048	v5	3	70	1	15	2	10.34	309.3333333	15% geographic NECROSIS	yes
+P373	SF11048	v6	NA-ghosts of solid tumor	0	2	95	NA	3.13	96	"98% geographic NECROSIS, ALL PROLIF CELLS BV"	yes
+P373	SF11048	v7	3	60	1	45	1	4.11	219	45% geographic NECROSIS	yes
+P373	SF11048	v8	3	90	0	0	1	20.12	339.6666667		yes
+P373	SF11048	v9	2	60	0	0	2	18.49	221.75	"infiltrative edge, GLOMERULOID BV"	yes
+P373	SF11048	v10	NA-ghosts of solid tumor	0	2	90	NA	22.16	176	"98% geographic NECROSIS; some cells cell ghosts, PROLF=IMMUNE, BV"	yes
+P455	SF11901	v1	0	0	0	0	0	NA	NA	normal cortex;; per copath Hypermutated 	no
+P455	SF11901	v2	2	55	0	0	0	NA	NA	"cortex at edge, WM, rhabdoid population"	yes
+P455	SF11901	v3	3	95	0	0	1	NA	NA	", prom BV, rhabdoid population"	yes
+P455	SF11901	v4	3	95	0	0	2	NA	NA		yes
+P455	SF11901	v5	3	85	0	0	2	NA	NA	"diff morpholoyg, structuring about BV, less rhabdoid, scatt PV lymph"	yes
+P455	SF11901	v6	3	85	0	0	2	NA	NA	scatt PV lymph	yes
+P455	SF11901	v7	3	95	0	5	2	NA	NA	"rhabdoid, <5% necrosis-microscopic focus"	yes
+P455	SF11901	v8	3	85	0	0	1	NA	NA		yes
+P455	SF11901	v9	3	75	0	0	1	NA	NA	PV lymph	yes
+P455	SF11901	v10	0	0	0	0	0	NA	NA	normal cortex	yes
+P457	SF11915	v1	NA-ghosts of solid tumor	0	2	95		NA	NA	100% NECROSIS	yes
+P457	SF11915	v2	2	45	0	0	1	NA	NA	BV	yes
+P457	SF11915	v3	2	40	0	0	0	NA	NA		no
+P457	SF11915	v4	NA-ghosts of solid tumor	0	2	100	NA	NA	NA	100% NECROSIS	no
+P457	SF11915	v5	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	no
+P457	SF11915	v6	2	50	0	0	1	NA	NA		no
+P457	SF11915	v7	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
+P457	SF11915	v8	3	70	0	0	2	NA	NA	MANY BV	no
+P457	SF11915	v9	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
+P457	SF11915	v10	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
