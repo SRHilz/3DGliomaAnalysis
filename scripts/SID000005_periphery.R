@@ -9,7 +9,7 @@ library(dplyr)
 
 
 plotTemplate <- function(tumorModel){
-  print(paste('Processing ', tumorModel, sep=''))
+  print('Processing tumor model')
   dtemp <- dim(tumorModel)
   print('Creating tumor contour and plotting tumor')
   tumor <- contour3d(tumorModel, x=1:dtemp[1], y=1:dtemp[2], z=1:dtemp[3], level = 1, alpha = .2, add = FALSE, draw = TRUE, color = 'yellow')
@@ -48,7 +48,7 @@ plot3dSamples <- function(sampleModels, colors){
     x <- sampleModels[[name]]
     print(paste0('Processing sample',name))
     dtemp <- dim(x)
-    sample <- contour3d(x, x=1:dtemp[1], y=1:dtemp[2], z=1:dtemp[3], level = 1, alpha = 1, color=colors[i], add = TRUE, draw = TRUE)
+    sample <- contour3d(x, x=1:dtemp[1], y=1:dtemp[2], z=1:dtemp[3], level = 1, alpha = 1, color=colors, add = TRUE, draw = TRUE)
     text3d(which(x == 1, arr.ind=TRUE)[1,], texts = name, cex=1, adj=-.3)
   }
 }
@@ -156,8 +156,8 @@ calcDistancesCentroid <- function(samplePoints, centroid, adj){
 }
 
 # Specify patient and load the config file for that patient. Config file contains paths to imaging files + ordering of samples + sample names + colors
-patientID <- 'Patient303'
-sf <- "sf10809"
+patientID <- 'Patient340'
+sf <- "sf11055"
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 modelsPath <- paste0(dataPath, '/3Dmodels/',patientID,'/',sf)
 
@@ -180,10 +180,10 @@ colors <- rep('blue', length(sampleModels))
 tumorModel <- readRDS(paste0(modelsPath, '/tumor_t2.rds'))
 
 # bring in adjustemnts (i.e. spacing for pixels) for patient
-adj <- paste0(modelsPath, '/adj.rds')
+adj <- readRDS(paste0(modelsPath, '/adj.rds'))
 
 # Plot background of brain and tumor
-plotTemplate(tumorModel,tumorModel) 
+plotTemplate(tumorModel) 
 
 # Define periphery
 tumorPeriphery <- definePeriph(tumorModel)
@@ -220,10 +220,6 @@ plotDistanceSegments(minDistances$XYZ, sampleCenters)
 
 # Plot segment between sample and centroid
 plotDistanceSegmentsCentroid(tumorCentroid, sampleCenters)
-
-# View sample orthographic (will give warning message In min(x...etc) because putting in text, please ignore!)
-#sample <- 20
-#orthographic(toExplore, xyz=sampleCenters[sample,], text=c(paste('sample ',as.character(sample),sep='')))#x is sagital, y is coronal, z is axial
 
 # Calculate avg distance from periphery
 print(mean(minDistances$distances))
