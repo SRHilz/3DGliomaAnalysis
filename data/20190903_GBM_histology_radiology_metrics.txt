@@ -57,7 +57,7 @@ P455	SF11901	v7	3	95	0	5	2	NA	NA	"rhabdoid, <5% necrosis-microscopic focus"	yes
 P455	SF11901	v8	3	85	0	0	1	NA	NA		yes
 P455	SF11901	v9	3	75	0	0	1	NA	NA	PV lymph	yes
 P455	SF11901	v10	0	0	0	0	0	NA	NA	normal cortex	yes
-P457	SF11915	v1	NA-ghosts of solid tumor	0	2	95		NA	NA	100% NECROSIS	yes
+P457	SF11915	v1	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
 P457	SF11915	v2	2	45	0	0	1	NA	NA	BV	yes
 P457	SF11915	v3	2	40	0	0	0	NA	NA		no
 P457	SF11915	v4	NA-ghosts of solid tumor	0	2	100	NA	NA	NA	100% NECROSIS	no
@@ -67,3 +67,41 @@ P457	SF11915	v7	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
 P457	SF11915	v8	3	70	0	0	2	NA	NA	MANY BV	no
 P457	SF11915	v9	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
 P457	SF11915	v10	NA-ghosts of solid tumor	0	2	95	NA	NA	NA	100% NECROSIS	yes
+P475	SF12180	v1	3	90	NA	5	1	NA	NA	"prom primitive embryonal component=where there is tumor it is very dense, not really infiltrating; all targets are very small"	NA
+P475	SF12180	v2	3	80	NA	50	2	NA	NA		NA
+P475	SF12180	v3	3	80	NA	40	1	NA	NA	necrosis is a bit hard to accurately assess as there is blood and the tissue is fallling aprt with necrotic cells interspersed	NA
+P475	SF12180	v4	2	70	NA	2	0	NA	NA	Tumoar and adjacent non-neoplastic brain	NA
+P475	SF12180	v5	NA	25	NA	0	1	NA	NA	Mostly blood vessels and blood with 50-100 tumor cells	NA
+P475	SF12180	v6	NA	NA	NA	NA	NA	NA	NA	"Only blood, no cells "	NA
+P475	SF12180	v7	0	5	NA	0	1	NA	NA	mildly hypercellualr brain with treatment effect	NA
+P475	SF12180	v8	NA	5	NA	0	0	NA	NA	Mostly blood and blood vessels	NA
+P481	SF12209	v1	0	0	NA	0	0	NA	NA	No definitive tumor	NA
+P481	SF12209	v2	3	75	NA	15	1	NA	NA	large tumor cells	NA
+P481	SF12209	v3	0	0	NA	0	0	NA	NA	Hypercellular-treatment effect vs. >10% tumor cells	NA
+P481	SF12209	v4	3	75	NA	0	1	NA	NA		NA
+P481	SF12209	v5	2	70	NA	0	0	NA	NA	tumor and interface with adjacent brain	NA
+P481	SF12209	v6	1	10	NA	0	0	NA	NA	hypercellular brain	NA
+P481	SF12209	v7	1	5	NA	0	0	NA	NA		NA
+P481	SF12209	v8	3	60	NA	20	1	NA	NA	"Many hyalinized BV, atypical gliosis may represent greater tumor than 60%"	NA
+P481	SF12209	v9	NA	0	NA	100	1	NA	NA	"All necrosis and hyalinized and necrotic BV, some nucleated cells are present but are associated with the BV"	NA
+P481	SF12209	v10	1	10	NA	0	1	NA	NA	"Hypercellular with atypical gliosis, post XRT vs. tumor cells or combination"	NA
+P482	SF12225	v1	2	65	NA	0	0	NA	NA	"We did not run IDH for this case but could if helpful, cells have very hyperchromatic nuclei; Target 1 is very small!"	NA
+P482	SF12225	v2	3	80	NA	0	0	NA	NA		NA
+P482	SF12225	v3	3	85	NA	0	1	NA	NA		NA
+P482	SF12225	v4	3	85	NA	0	1	NA	NA		NA
+P482	SF12225	v5	3	80	NA	0	0	NA	NA		NA
+P482	SF12225	v6	2	65	NA	0	0	NA	NA	*two distinct regions or tumor (80%) and cortex being infiltrated by tumor (15%); on avg ~65%	NA
+P482	SF12225	v7	3	85	NA	0	1	NA	NA		NA
+P482	SF12225	v8	3	80	NA	0	1	NA	NA		NA
+P482	SF12225	v9	2	65	NA	0	0	NA	NA		NA
+P482	SF12225	v10	2	75	NA	0	0	NA	NA		NA
+P485	SF12300	v1	1	5	NA	0	0	NA	NA	Scattered atypical cells that are likely tumor	NA
+P485	SF12300	v2	2	55	NA	0	0	NA	NA	Tumor infiltrating white matter	NA
+P485	SF12300	v3	1	5	NA	0	0	NA	NA	Fragments of cortex and white matter with rare tumor cells	NA
+P485	SF12300	v4	3	85	NA	0	0	NA	NA	Desne tumor	NA
+P485	SF12300	v5	3	95	NA	0	1	NA	NA	Desne tumor	NA
+P485	SF12300	v6	3	85	NA	0	0	NA	NA		NA
+P485	SF12300	v7	3	95	NA	5	0	NA	NA	"Focus of PV inflammation, sarcomatous appearance focally"	NA
+P485	SF12300	v8	0	0	NA	0	0	NA	NA	Cortex with small portion of underlying white matter with scattered atypical glial cells	NA
+P485	SF12300	v9	3	80	NA	0	2	NA	NA		NA
+P485	SF12300	v10	2	75	NA	0	0	NA	NA		NA
