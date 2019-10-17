@@ -75,7 +75,7 @@ ensmblRoot <- function(ensmblID){
 }
 
 # User-defined variables
-tag <- 'SID000003_20190529_first_submission'
+tag <- 'SID000003_20190913_expanded_gbm'
 outfolder <- 'SID000003_RNAseq_Summary_Analysis/'
 countsType <- '.symbol.coding.counts'
 
@@ -84,7 +84,7 @@ countsType <- '.symbol.coding.counts'
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 # set file info
-countsInfile <- paste0(dataPath,tag,countsType)
+countsInfile <- paste0(dataPath,gsub('SID000003_','',tag),countsType)
 CPMOutputFile <- paste0(outputPath,outfolder,tag,gsub('.counts','.CPMs.csv', countsType)) #will move CPM files from output to data folder after checking
 PCAFile <- paste0(outputPath,outfolder,tag,'_PCA.pdf')
 PCALoadingPath <- paste0(outputPath,outfolder)
@@ -139,7 +139,7 @@ colors <- merged$color
 names(colors) <- merged$sampleID
 colors = colors[colnames(nrm_count_matrix)]
 raw <- pca$x[,1:4]
-xaxis <- 1
+xaxis <- 2
 yaxis <- 3
 xlab <- paste('PC',toString(xaxis),' (',toString(round(100*summary(pca)$importance[2,xaxis])),'%)')
 ylab <- paste('PC',toString(yaxis),' (',toString(round(100*summary(pca)$importance[2,yaxis])),'%)')
