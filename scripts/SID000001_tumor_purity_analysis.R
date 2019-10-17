@@ -3,6 +3,7 @@
 # Usage: Assess the purity of samples; for those spatially mapped look at spatial distributions
 
 library(ggplot2)
+library(dplyr)
 
 pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
@@ -29,8 +30,8 @@ names(colorKey) <- subtypedata$Patient
 merged <- merge(data, subtypedata, by="Patient")
 
 # remove samples that are lacking purity info at all (did not have exome done)
-discard <- which(is.na(merged$WES_ID))
-merged <- merged[-discard,]
+#discard <- which(is.na(merged$WES_ID))
+#merged <- merged[-discard,]
 
 # subset P260 by medial and lateral
 merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(10))),]$Patient <- 'P260-l'
@@ -94,8 +95,26 @@ aggregate(summary[,'medians'], list(summary$molType), var)
 # enhancing vs non-enhancing
 mergedWithE <- merged[which(!is.na(merged$MREnhancementWithContrast)),]
 mergedWithE$MREnhancementWithContrast <- factor(mergedWithE$MREnhancementWithContrast, levels=unique(mergedWithE$MREnhancementWithContrast))
-ggplot(data=mergedWithE, aes(x=Patient, y=purity, fill=MREnhancementWithContrast)) +
-  geom_boxplot(position=position_dodge(1))
+ggplot(data=mergedWithE, aes(y=purity, x=MREnhancementWithContrast, fill=MREnhancementWithContrast)) +
+  geom_boxplot(position=position_dodge(1)) +
+  facet_wrap(facets=mergedWithE$Patient)
+
+# read in GBM 
+gbm <- read.table(paste0(dataPath, '20190903_GBM_histology_radiology_metrics.txt'), header=T, sep='\t')
+gbm$uniqueID <- paste0(gbm$Patient, gbm$SampleName)
+merged$uniqueID <- paste0(merged$Patient, merged$SampleName)
+gbmMerged <- merge(gbm, merged, by="uniqueID")
+gbmMerged$Patient.y <- factor(gbmMerged$Patient.y)
+gbmMerged$Target.BV.hyperplasia <- factor(gbmMerged$Target.BV.hyperplasia)
+gbmMerged$Target.Necrosis <- factor(gbmMerged$Target.Necrosis)
+ggplot(gbmMerged, aes(y=purity, x=Percent.necrosis)) +
+  geom_boxplot(position=position_dodge(1)) +
+  facet_wrap(facets=gbmMerged$Patient.y)
+ggplot(gbmMerged, aes(x=Percent.necrosis, y=purity, colour=Patient.y)) +
+  geom_point(size=.8) +
+  geom_smooth(aes(colour=factor(Patient.y)), method = "lm", se=F)
+ 
+plot(gbmMerged$purity,gbmMerged$Percent.necrosis)
 
 # pull out mean clonal VAF info for each sample
 vafs <- read.table(paste0(outputPath,'/SID000014_mutational_categorization_clonal_subclonal_by_patient/SID000014_vafs.txt'), sep='\t', header=T, stringsAsFactors = F)
