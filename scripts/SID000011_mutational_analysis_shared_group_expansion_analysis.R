@@ -10,6 +10,7 @@ library(gplots)
 library(gdata)
 library(gtools)
 library(grDevices)
+library(vegan)
 
 makeLongID <- function(gene, contig, position,refBase, altBase){
   longID <-paste(gene,contig,position,refBase,altBase, sep='_')
@@ -196,9 +197,10 @@ getMutsBin <- function(avfile){ #from Tali's phylo tree code, pulls out all cove
 
 ## PART 1 - Patient-specific analysis - for one patient at a time (aggregate analysis for final fig at end)
 # specify which patient you want to use and file paths
-patientID <- 'Patient375'
+patientID <- 'Patient452'
 cancerCensusGenesPath <- paste0(dataPath,'cancer_gene_census.csv')
 outfolder <- 'SID000011_mutational_analysis_shared_group_expansion_analysis/'
+purityCutoff <- .7
 
 # read in config file info
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
@@ -264,7 +266,7 @@ colnames(vafs) <- gsub('[.]','-',colnames(vafs))
 # plot
 toPlot <- vafs
 genes <- sapply(rownames(toPlot), getGene)
-annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesFile)
+annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesPath)
 heatmap.2(toPlot, trace="none", sepcolor='black', colsep=1:ncol(toPlot), rowsep=1:nrow(toPlot),sepwidth=c(0.01,0.01), colRow=annotationColors, margins=c(13,13))
 
 # final create a correlation matrix
@@ -272,11 +274,11 @@ correlation <- cor(t(toPlot), method="pearson")
 dissimilarity <- (1 - correlation)/2
 toPlot3 <- dissimilarity
 genes <- sapply(rownames(toPlot3), getGene)
-annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesFile)
+annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesPath)
 heatmap.2(toPlot3, trace="none", sepcolor='black', colsep=1:ncol(toPlot3), rowsep=1:nrow(toPlot3),sepwidth=c(0.01,0.01), colRow=annotationColors, col=bluered, margins=c(13,13))
 
 # #Identify optimal number for k (both Elbow method and Calinski) - can combine this info with hclust to know where to best cut the tree
-kmax <- 10
+kmax <- 20
 wss <- (nrow(vafs)-1)*sum(apply(vafs,2,var))
 for (i in 2:kmax){
   wss[i] <- sum(kmeans(vafs,centers=i)$withinss)
@@ -287,44 +289,32 @@ fit <- cascadeKM(scale(dissimilarity, center = TRUE,  scale = TRUE), 1, 30, iter
 plot(fit, sortg = TRUE, grpmts.plot = TRUE)
 
 # Cut the tree
-if (patientID=="Patient303"){
+if (patientID=="Patient303" | patientID=="Patient450" | patientID=='Patient260'){
   optimal.k=5
 }
-if (patientID=="Patient327" | patientID=="Patient454"){
+if (patientID=="Patient327" | patientID=="Patient453" | patientID=="Patient454"){
   optimal.k=4
 }
-if (patientID=="Patient375" | patientID=="Patient453" | patientID=="Patient413"){
+if (patientID=="Patient375" | patientID=="Patient413"){
   optimal.k=3
+}
+if (patientID=="Patient482"){
+  optimal.k=7
+}
+if (patientID=="Patient300"){
+  optimal.k=6
+}
+if (patientID=="Patient452"){
+  optimal.k=10
 }
 clusters <- cutree(hclust(as.dist(dissimilarity)), k=optimal.k)
 
-# , are all on same chrom, or have too low a correlation (hardcoded in for each patient after manual inspection)
+# are all on same chrom, or have too low a correlation (hardcoded in for each patient after manual inspection)
 banned <- c()
 clusterFrequency <- table(clusters)
 banned <- names(clusterFrequency[clusterFrequency==1])
 clusters <- clusters[!clusters %in% banned]
 write.table(clusters[order(clusters)], file=paste0(outputPath, outfolder, patientID, '_clusters_post_filtering.txt'), quote=F, col.names=F, sep='\t')
-
-# if (patientID=="Patient303"){
-#   banned <- c("BOD1_chr5_C173036394T","CS_chr12_C56676244T","LCN1_chr9_T138413373C","GPATCH8_chr17_T42477818A")
-#   
-# }
-# if (patientID=="Patient327"){
-#   banned <- c("NGEF_chr2_C233759597T")
-#   clusters <- clusters[!names(clusters) %in% banned]
-# } 
-# if (patientID=="Patient453"){
-#   banned <- c("LRFN3_chr19_C36431273T","BTBD7_chr14_T93761200G")
-#   clusters <- clusters[!names(clusters) %in% banned]
-# } 
-# if (patientID=="Patient413"){
-#   banned <- c("ESPL1_chr12_C53677885T")
-#   clusters <- clusters[!names(clusters) %in% banned]
-# } 
-# if (patientID=="Patient454"){
-#   banned <- c("PRIC285_chr20_G62197119A")
-#   clusters <- clusters[!names(clusters) %in% banned]
-# } 
 
 # create a distance matrix
 coordinates <- merged[which(merged$Patient==patient_ID),c('L.Coordinate','P.Coordinate','S.Coordinate')]
@@ -343,7 +333,9 @@ outputSummary <- c()
 for (i in 1:max(clusters)){
   for(j in 1:length(thresholds)){
     if (i %in% clusters){
+      print(i)
       y <- calcWithinGroupDistance(vafs, i, clusters, reshapedDistances, thresholds[j])
+      print(y)
       meanRandom <- mean(y$random)
       outputRandom <- rbind(outputRandom,cbind(i,thresholds[j],y$random))
       outputSummary <- rbind(outputSummary,c(i,thresholds[j],y$within,meanRandom,y$p,y$n, paste(y$samples,collapse=',')))
@@ -394,7 +386,7 @@ plot(rep(1,10), col=rbPal(10),pch=15, cex=3, xlim=c(1,40), axes=F, ann=F)
 
 ## PART 2 - only run this code once you have generated everything above for all patients you use here
 # Final aggregate figure 
-patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453',"Patient413",'Patient454')
+patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453','Patient300','Patient260','Patient482','Patient450',"Patient413",'Patient454','Patient452')
 GBMs <- c("Patient413",'Patient454')
 toPlotFinal <- c()
 for (patientID in patientsToUse){
