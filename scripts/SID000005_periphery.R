@@ -156,16 +156,20 @@ calcDistancesCentroid <- function(samplePoints, centroid, adj){
 }
 
 # Specify patient and load the config file for that patient. Config file contains paths to imaging files + ordering of samples + sample names + colors
-patientID <- 'Patient340'
-sf <- "sf11055"
+patientID <- 'Patient475'
+sf <- "sf12180"
+tumorPrefix <- "Primary-v"
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 modelsPath <- paste0(dataPath, '/3Dmodels/',patientID,'/',sf)
 
 # Retreive sample model files
-sampleModelFiles <- mixedsort(list.files(modelsPath, pattern="sample*"))
+sampleModelFiles <- mixedsort(list.files(modelsPath, pattern="^sample*"))
 
 # Create names object
 names <- gsub('.rds','',gsub('sample','',sampleModelFiles))
+
+# Also generate a longer names object that will match the exome sample identifier
+sampleID_long <- paste0(tumorPrefix,names)
 
 # Read in sample models
 sampleModels <- lapply(paste0(modelsPath, '/', sampleModelFiles), readRDS)#this should be a list of all subdirectories in the main sample dir, each containing dicoms for a single data point
