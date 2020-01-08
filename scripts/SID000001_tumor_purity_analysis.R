@@ -29,6 +29,18 @@ names(colorKey) <- subtypedata$Patient
 # merge by patient ID
 merged <- merge(data, subtypedata, by="Patient")
 
+# create 3D atlas cohort figure (before getting into purity)
+merged_3DAtlas <- merged[which(merged$PatientStudy=='3DAtlas'),]
+orderToUse <- patientOrder[which(patientOrder %in% merged_3DAtlas$Patient)]
+samplesCount <- merged_3DAtlas[which(merged_3DAtlas$SampleType == 'SM'),] %>% count(Patient)
+samplesCount$Patient <- factor(samplesCount$Patient, levels=orderToUse)
+ggplot(data=samplesCount, aes(x=Patient, y=n))+
+  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
+  coord_flip()
+range(samplesCount$n)
+median(samplesCount$n)
+
 # remove samples that are lacking purity info at all (did not have exome done)
 #discard <- which(is.na(merged$WES_ID))
 #merged <- merged[-discard,]
