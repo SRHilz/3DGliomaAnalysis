@@ -1,0 +1,17 @@
+cluster	threshold	meanDistanceWithin	meanDistanceRandom	p	n	samples
+1	0.1	22.6338992701594	25.8423670108516	0.2	4	Recurrence1v3,Recurrence1v4,Recurrence1v6,Recurrence1v7
+1	0.05	22.6338992701594	25.8423670108516	0.2	4	Recurrence1v3,Recurrence1v4,Recurrence1v6,Recurrence1v7
+1	0.01	23.3329903286976	25.8423670108516	0.14	6	Recurrence1v1,Recurrence1v2,Recurrence1v3,Recurrence1v4,Recurrence1v6,Recurrence1v7
+1	0.001	25.8423670108516	25.8423670108516	1	7	Recurrence1v1,Recurrence1v2,Recurrence1v3,Recurrence1v4,Recurrence1v5,Recurrence1v6,Recurrence1v7
+2	0.1	43.0733757674042	25.8423670108516	1	2	Recurrence1v5,Recurrence1v7
+2	0.05	43.0733757674042	25.8423670108516	1	2	Recurrence1v5,Recurrence1v7
+2	0.01	30.7693631109197	25.8423670108516	0.89	4	Recurrence1v2,Recurrence1v4,Recurrence1v5,Recurrence1v7
+2	0.001	26.2847849713158	25.8423670108516	0.57	6	Recurrence1v1,Recurrence1v2,Recurrence1v3,Recurrence1v4,Recurrence1v5,Recurrence1v7
+3	0.1	15.6868161205517	25.8423670108516	0.19	2	Recurrence1v4,Recurrence1v6
+3	0.05	15.6868161205517	25.8423670108516	0.19	2	Recurrence1v4,Recurrence1v6
+3	0.01	15.6868161205517	25.8423670108516	0.19	2	Recurrence1v4,Recurrence1v6
+3	0.001	20.2373370388037	25.8423670108516	0.2	3	Recurrence1v3,Recurrence1v4,Recurrence1v6
+4	0.1	12.8969763898365	25.8423670108516	0.1	2	Recurrence1v1,Recurrence1v2
+4	0.05	12.8969763898365	25.8423670108516	0.1	2	Recurrence1v1,Recurrence1v2
+4	0.01	28.6808745126035	25.8423670108516	0.86	5	Recurrence1v1,Recurrence1v2,Recurrence1v5,Recurrence1v6,Recurrence1v7
+4	0.001	26.2633386662617	25.8423670108516	0.43	6	Recurrence1v1,Recurrence1v2,Recurrence1v4,Recurrence1v5,Recurrence1v6,Recurrence1v7
