@@ -197,7 +197,7 @@ getMutsBin <- function(avfile){ #from Tali's phylo tree code, pulls out all cove
 
 ## PART 1 - Patient-specific analysis - for one patient at a time (aggregate analysis for final fig at end)
 # specify which patient you want to use and file paths
-patientID <- 'Patient452'
+patientID <- 'Patient276'
 cancerCensusGenesPath <- paste0(dataPath,'cancer_gene_census.csv')
 outfolder <- 'SID000011_mutational_analysis_shared_group_expansion_analysis/'
 purityCutoff <- .7
@@ -278,7 +278,7 @@ annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesPath)
 heatmap.2(toPlot3, trace="none", sepcolor='black', colsep=1:ncol(toPlot3), rowsep=1:nrow(toPlot3),sepwidth=c(0.01,0.01), colRow=annotationColors, col=bluered, margins=c(13,13))
 
 # #Identify optimal number for k (both Elbow method and Calinski) - can combine this info with hclust to know where to best cut the tree
-kmax <- 20
+kmax <- 4
 wss <- (nrow(vafs)-1)*sum(apply(vafs,2,var))
 for (i in 2:kmax){
   wss[i] <- sum(kmeans(vafs,centers=i)$withinss)
@@ -306,6 +306,9 @@ if (patientID=="Patient300"){
 }
 if (patientID=="Patient452"){
   optimal.k=10
+}
+if (patientID=='Patient276'){
+  optimal.k=2
 }
 clusters <- cutree(hclust(as.dist(dissimilarity)), k=optimal.k)
 
@@ -386,8 +389,10 @@ plot(rep(1,10), col=rbPal(10),pch=15, cex=3, xlim=c(1,40), axes=F, ann=F)
 
 ## PART 2 - only run this code once you have generated everything above for all patients you use here
 # Final aggregate figure 
-patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453','Patient300','Patient260','Patient482','Patient450',"Patient413",'Patient454','Patient452')
-GBMs <- c("Patient413",'Patient454')
+patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453','Patient300','Patient450','Patient260','Patient452','Patient482',"Patient413",'Patient454','Patient276')
+IDHmutLGG <- c("Patient303","Patient327",'Patient375','Patient453','Patient482')
+IDHwtTERTp <- c("Patient413",'Patient454','Patient276')
+Recurrent <- c("Patient300","Patient260",'Patient450','Patient276')
 toPlotFinal <- c()
 for (patientID in patientsToUse){
   file=paste0(outputPath, outfolder, patientID,'_outputSummary')
@@ -411,9 +416,9 @@ toPlotFinal <- toPlotFinal[-toExclude,]
 toPlotFinal$patientCluster <- paste0(gsub("Patient",'P',toPlotFinal$patient),'-',toPlotFinal$cluster)
 order <- unique(toPlotFinal$patientCluster)
 toPlotFinal$patientCluster <- factor(toPlotFinal$patientCluster, levels=order)
-toPlotFinal$type <- 'Astro'
-toPlotFinal[which(toPlotFinal$patient %in% GBMs),]$type <- 'GBM'
-# plot by difference - still left over from old way, need to update if want to use
+toPlotFinal$type <- 'Other'
+toPlotFinal[which(toPlotFinal$patient %in% PrimaryGBMs),]$type <- 'PrimaryGBM'
+# plot by difference 
 toPlotFinal$difference <- toPlotFinal$meanDistanceWithin-toPlotFinal$meanDistanceRandom
 ggplot(data = toPlotFinal, aes(x=patientCluster, y=difference, group=threshold))+
   geom_point(aes(colour=threshold),size=10, shape='+')+
@@ -421,34 +426,33 @@ ggplot(data = toPlotFinal, aes(x=patientCluster, y=difference, group=threshold))
   geom_hline(yintercept=0,colour='black')+
   scale_colour_manual(values=thresholdColors)
 toPlotFinalSingleThresh <- toPlotFinal[which(toPlotFinal$threshold == 0.05),]
-colors <- as.character(colorKey[gsub('Patient','P',patientsToUse)])
-toPlotFinalSingleThresh$patient <- factor(toPlotFinalSingleThresh$patient, levels=patientsToUse)
+toPlotFinalSingleThresh$patient <- factor(toPlotFinalSingleThresh$patient, levels=patientOrder)
+toPlotFinalSingleThresh <- toPlotFinalSingleThresh[order(match(toPlotFinalSingleThresh$patient, patientOrder)),]
+toPlotFinalSingleThresh$patientCluster <- factor(toPlotFinalSingleThresh$patientCluster, levels=toPlotFinalSingleThresh$patientCluster)
+colors <- as.character(colorKey[gsub('Patient','P',patientOrder)])
 ggplot(data = toPlotFinalSingleThresh, aes(x=patientCluster, y=difference, fill=patient))+
   geom_bar(stat="identity")+
   theme(axis.text.x = element_text(size=10, angle=90, hjust=1, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
   scale_fill_manual(values=colors)
-table(toPlotFinal$difference < 0, toPlotFinal$threshold)
-astroSubset <- toPlotFinal[which(toPlotFinal$type=='Astro'),]
-astroProportions <- table(astroSubset$difference < 0, astroSubset$threshold)
-astroProportionsToPlot <- melt(astroProportions['TRUE',]/(astroProportions['FALSE',]+astroProportions['TRUE',]))
-astroProportionsToPlot$type <- 'Astro'
-astroProportionsToPlot$threshold <- rownames(astroProportionsToPlot)
-gbmSubset <- toPlotFinal[which(toPlotFinal$type=='GBM'),]
-gbmProportions <- table(gbmSubset$difference < 0, gbmSubset$threshold)
-gbmProportionsToPlot <- melt(gbmProportions['TRUE',]/(gbmProportions['FALSE',]+gbmProportions['TRUE',]))
-gbmProportionsToPlot$type <- 'GBM'
-gbmProportionsToPlot$threshold <- rownames(gbmProportionsToPlot)
-# Way to plot in two side by side plots
-par(mfrow=c(1,2))
-barplot(astroProportions, ylab="Threshold")
-barplot(gbmProportions)
-# Way to plot in single plot
-colors <- c('darkgreen','firebrick') #will be used to color when plotting by subtype (reds = GBMs, blues = oligos, greens = astros)
-toPlot2 <- rbind(astroProportionsToPlot,gbmProportionsToPlot)
-ggplot(data = toPlot2, aes(x=threshold, y=value, fill=type))+
-  geom_bar(stat="identity", position="dodge")+
-  scale_fill_manual(values = colors) + 
-  theme(axis.text.x = element_text(size=10, angle=90, hjust=1, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
-
+# Look at proportion of clusters per patient that are < random
+proportionsToPlot <- data.frame(patient=character(), proportion=numeric(), subtype=character(), ordinaltype=character(), stringsAsFactors=F)
+for (p in unique(toPlotFinalSingleThresh$patient)){
+  toPlotFinalSingleThreshPatient <- toPlotFinalSingleThresh[which(toPlotFinalSingleThresh$patient==p),]
+  lessThanThreshold <- nrow(toPlotFinalSingleThreshPatient[which(toPlotFinalSingleThreshPatient$difference < 0),])
+  totaln <- nrow(toPlotFinalSingleThreshPatient)
+  proportion <- lessThanThreshold/totaln
+  subtype <- 'Other'
+  if (p %in% IDHwtTERTp){subtype <- 'GBMTERT'}
+  ordinaltype <- 'Primary'
+  if (p %in% Recurrent){ordinaltype <- 'Recurrent'}
+  toBind <- data.frame(patient=p,proportion=proportion, subtype=subtype, ordinaltype=ordinaltype, stringsAsFactors=F)
+  proportionsToPlot <- rbind(proportionsToPlot, toBind)
+}
+patientOrder <- proportionsToPlot[order(proportionsToPlot$proportion, decreasing=TRUE),]$patient
+proportionsToPlotNoP452 <- proportionsToPlot[which(!proportionsToPlot$patient=='Patient452'),]
+ks.test(proportionsToPlotNoP452[which(proportionsToPlotNoP452$subtype=='GBMTERT'),]$proportion,proportionsToPlotNoP452[which(proportionsToPlotNoP452$subtype=='Other'),]$proportion)
+boxplot(proportionsToPlotNoP452$proportion~proportionsToPlotNoP452$subtype)
+ks.test(proportionsToPlot[which(proportionsToPlot$ordinaltype=='Primary'),]$proportion,proportionsToPlot[which(proportionsToPlot$ordinaltype=='Recurrent'),]$proportion)
+boxplot(proportionsToPlot$proportion~proportionsToPlot$ordinaltype)
 
 
