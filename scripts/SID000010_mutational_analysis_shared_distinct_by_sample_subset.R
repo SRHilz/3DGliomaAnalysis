@@ -80,7 +80,7 @@ source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications
 #  if there are more samples than samplesPerPatientToUse, will average result from all possible combinations
 #  of this number.
 purityCutoff <- .7
-patientsToUse <- c('Patient41','Patient49','Patient303','Patient327','Patient375','Patient453','Patient413','Patient454','Patient300','Patient302','Patient450')
+patientsToUse <- c('Patient41','Patient49','Patient303','Patient327','Patient375','Patient453','Patient482','Patient413','Patient454','Patient475','Patient485','Patient260','Patient276','Patient300','Patient302','Patient450')
 samplesPerPatientToUse <- 2 # cannot use NA for this analysis
 
 # read in sample data file
@@ -200,16 +200,16 @@ dataText$label <- paste0('p=',dataText$adj.p,', R=',dataText$R)
 write.table(dataText, file=paste0(outputPath,outfolder,'SID000010_pairwise_genetic_distance_spatial_distance_stats.txt'),sep='\t', quote=F, row.names = F)
 
 ## Do stats for Primary vs Recurrent mean snvs_different
-patientMeans <- aggregate(callsPerSampleSubset$normedDifference, by=list(patient=callsPerSampleSubset$patient), mean)
-colnames(patientMeans) <- c('patient','normedDifference_means')
+patientMedians <- aggregate(callsPerSampleSubset$normedDifference, by=list(patient=callsPerSampleSubset$patient), median)
+colnames(patientMedians) <- c('patient','normedDifference_medians')
 patientVariance <- aggregate(callsPerSampleSubset$normedDifference, by=list(patient=callsPerSampleSubset$patient), var)
 colnames(patientVariance) <- c('patient','normedDifference_variance')
-patientMeans<- merge(patientVariance,patientMeans, by='patient')
-patientMeans$tumorType <- 'Primary'
-patientMeans[which(patientMeans$patient %in% unique(callsPerSampleSubset[which(callsPerSampleSubset$tumorType=='Recurrence1'),]$patient)),]$tumorType <- 'Recurrent'
-wilcox.test(patientMeans$normedDifference_means~patientMeans$tumorType, alternative='less')
-wilcox.test(patientMeans$normedDifference_var~patientMeans$tumorType)
-boxplot(patientMeans$normedDifference_means~patientMeans$tumorType, col='grey', ylab='Mean normalized genetic difference')
+patientMedians<- merge(patientVariance,patientMedians, by='patient')
+patientMedians$tumorType <- 'Primary'
+patientMedians[which(patientMedians$patient %in% unique(callsPerSampleSubset[which(callsPerSampleSubset$tumorType=='Recurrence1'),]$patient)),]$tumorType <- 'Recurrent'
+wilcox.test(patientMedians$normedDifference_medians~patientMedians$tumorType)
+wilcox.test(patientMedians$normedDifference_var~patientMedians$tumorType)
+boxplot(patientMedians$normedDifference_medians~patientMedians$tumorType, col='grey', ylab='Median normalized genetic difference')
 
 ## Do multiple regression on distance vs snvs
 fit <- lm(snvs_different ~ spatial_distance + patient, data=callsPerSampleSubset)
