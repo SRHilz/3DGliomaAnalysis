@@ -156,26 +156,23 @@ calcDistancesCentroid <- function(samplePoints, centroid, adj){
 }
 
 # Specify patient and load the config file for that patient. Config file contains paths to imaging files + ordering of samples + sample names + colors
-patientID <- 'Patient475'
-sf <- "sf12180"
-tumorPrefix <- "Primary-v"
+patientID <- 'Patient276'
+sf <- "sf11054"
+tumorPrefix <- "Recurrence1v"
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 modelsPath <- paste0(dataPath, '/3Dmodels/',patientID,'/',sf)
 
 # Retreive sample model files
-sampleModelFiles <- mixedsort(list.files(modelsPath, pattern="^sample*"))
-
-# Create names object
-names <- gsub('.rds','',gsub('sample','',sampleModelFiles))
+sampleModelFiles <- mixedsort(list.files(modelsPath, pattern="coordinates_samples.rds"))
 
 # Also generate a longer names object that will match the exome sample identifier
 sampleID_long <- paste0(tumorPrefix,names)
 
 # Read in sample models
-sampleModels <- lapply(paste0(modelsPath, '/', sampleModelFiles), readRDS)#this should be a list of all subdirectories in the main sample dir, each containing dicoms for a single data point
+sampleCenters <- lapply(paste0(modelsPath, '/', sampleModelFiles), readRDS)[[1]]#this should be a list of all subdirectories in the main sample dir, each containing dicoms for a single data point
 
-# Name sample models object 
-names(sampleModels) <- names
+# Create names object
+names <- rownames(sampleCenters)
 
 # Set up default colors
 colors <- rep('blue', length(sampleModels))
@@ -195,11 +192,8 @@ tumorPeriphery <- definePeriph(tumorModel)
 # View periphery
 #contour3d(tumorPeriphery$mask, x=1:dim(tumorPeriphery$mask)[1], y=1:dim(tumorPeriphery$mask)[2], level=1, z=1:dim(tumorPeriphery$mask)[3], alpha = 1, add = TRUE, draw = TRUE, color = 'red')
 
-# Extract centered sample coordinates
-sampleCenters <- calcSampleCenters(sampleModels)
-
 # Plot samples
-plot3dSamples(sampleModels, colors)
+plot3dSamples(sampleCenters, colors)
 
 # Calc sample pairwise distances - used only to check, should always use official coordinates
 samplePairwiseDistances <- calcSamplePairwiseDistances(sampleCenters, adj)
