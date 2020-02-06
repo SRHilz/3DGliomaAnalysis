@@ -84,14 +84,14 @@ source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications
 #  if there are more samples than samplesPerPatientToUse, will average result from all possible combinations
 #  of this number.
 purityCutoff <- .7
-samplesPerPatientToUse <- 7 #can also be NA; in this case all samples fitting the criteria will be used
+samplesPerPatientToUse <- 6 #can also be NA; in this case all samples fitting the criteria will be used
 requireSM <- FALSE
 
 # read in sample data file
 merged <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
 
 # subset by if has WES data
-toUse <- data[which(!is.na(data$WES_ID)),]$WES_ID
+toUse <- merged[which(!is.na(merged$WES_ID)),]$WES_ID
 merged <- merged[which(merged$WES_ID %in% toUse),]
 
 # subset by sample type if desired
