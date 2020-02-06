@@ -4,6 +4,8 @@
 
 library(ggplot2)
 library(dplyr)
+library(ggpmisc)
+library(stats)
 
 pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
@@ -33,21 +35,39 @@ merged <- merge(data, subtypedata, by="Patient")
 merged_3DAtlas <- merged[which(merged$PatientStudy=='3DAtlas'),]
 orderToUse <- patientOrder[which(patientOrder %in% merged_3DAtlas$Patient)]
 samplesCount <- merged_3DAtlas[which(merged_3DAtlas$SampleType == 'SM'),] %>% count(Patient)
-samplesCount$Patient <- factor(samplesCount$Patient, levels=orderToUse)
+samplesCount$Patient <- factor(samplesCount$Patient, levels=rev(orderToUse))
 ggplot(data=samplesCount, aes(x=Patient, y=n))+
   geom_bar(stat="identity") +
   theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
   coord_flip()
 range(samplesCount$n)
 median(samplesCount$n)
-
-# remove samples that are lacking purity info at all (did not have exome done)
-#discard <- which(is.na(merged$WES_ID))
-#merged <- merged[-discard,]
+pairwideDistances <- data.frame(patient=character(), samplePair=character(), distance=numeric(), stringsAsFactors=F)
+for (p in unique(merged_3DAtlas$Patient)){
+  print(p)
+  localP <- merged_3DAtlas[which(merged_3DAtlas$Patient==p),]
+  allSampleCombinations <- combn(localP$SampleName,2)
+  for (c in 1:ncol(allSampleCombinations)){
+    a <- allSampleCombinations[1,c]
+    b <- allSampleCombinations[2,c]
+    a.coords <- localP[which(localP$SampleName==a),c('L.Coordinate','P.Coordinate','S.Coordinate')]
+    b.coords <- localP[which(localP$SampleName==b),c('L.Coordinate','P.Coordinate','S.Coordinate')]
+    distance <- pairwiseDist2pointsLPS(a.coords,b.coords)
+    toBind <- data.frame(c(patient=p, samplePair=paste0(a,'_','b'), distance=distance))
+    pairwideDistances <- rbind(pairwideDistances, toBind)
+  }
+}
+colnames(pairwideDistances) <- c('patient','samplePair','distance')
+pairwideDistances$patient <- factor(pairwideDistances$patient, levels=orderToUse)
+# violin plot of average pairwise distance
+ggplot(pairwideDistances, aes(x=pairwideDistances$patient, y=distance)) + 
+  geom_violin(width=1.2,fill='grey')+
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  geom_boxplot(width=0.1)
 
 # subset P260 by medial and lateral
-merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(10))),]$Patient <- 'P260-l'
-merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(from=11,to=20,by=1))),]$Patient <- 'P260-m'
+#merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(10))),]$Patient <- 'P260-l'
+#merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(from=11,to=20,by=1))),]$Patient <- 'P260-m'
 
 # specify purity metric to use
 merged$purity <- merged$FACETS
@@ -56,8 +76,8 @@ merged[which(merged$PurityEstUsed == 'IDH'),]$purity <- 2*merged[which(merged$Pu
 # convert NAs to 0 (so that are counted; if NA means FACETs could not calculate because were so low)
 merged[which(is.na(merged$purity)),]$purity <- .1
 
-# set patient level order (Oligo, Astro, GBM, with Primaries always before Recurrences)
-merged$Patient <- factor(merged$Patient, levels=patientOrderSplit)
+# convert purities >1 to 1
+merged[which(merged$purity >1),]$purity <- 1
 
 # set colors (+ molsubtype) for plotting (here focused on subtype differences)
 merged$molType <- 'IDH-mut_A' # Astro
@@ -68,41 +88,48 @@ merged[which(merged$X1p19q==1),]$molType <- 'IDH-mut_O' #blue Set1
 merged[which(merged$X1p19q==1),]$color <- subtypeColors['IDH-mut_O'] #blue Set1
 color <- unique(merged[,c('Patient','color')])$color
 names(color) <- unique(merged[,c('Patient','color')])$Patient
-color <- color[patientOrderSplit] %>% unlist
+color <- color[patientOrder] %>% unlist
 molType <- unique(merged[,c('Patient','molType')])$molType
 names(molType) <- unique(merged[,c('Patient','molType')])$Patient
-molType <- molType[patientOrderSplit]
-
-# plot boxplot
-boxplot(merged$purity~merged$Patient, col = 'grey72', ylab = 'Estimated CCF', las='2')
-mergedSM <- merged[which(merged$SampleType == 'SM'),]
-mergednonSM <- merged[which(merged$SampleType == 'non-SM'),]
-stripchart(mergedSM$purity~mergedSM$Patient, vertical = TRUE, 
-           method = "jitter", add = TRUE, pch = 20, col = c('#363795'), cex=.5)
-stripchart(mergednonSM$purity~mergednonSM$Patient, vertical = TRUE, 
-           method = "jitter", add = TRUE, pch = 17, col = c('#E05828'), cex=.5)
 
 # get out grade by patient 
 grade <- unique(merged[,c('Patient','Grade')])$Grade
 names(grade) <- unique(merged[,c('Patient','Grade')])$Patient
-grade <- grade[patientOrderSplit]
 
 # get mean,med, and var by patient
 summary <- aggregate(merged[,'purity'], list(merged$Patient), mean)
 colnames(summary) <- c("patientID","means")
-summary$molType <- molType
+summary$molType <- molType[summary$patientID]
 summary$molType <- factor(molType, levels=c("IDH-mut_O","IDH-mut_A","IDH-wt"))
-summary$grade <- grade
+summary$grade <- grade[summary$patientID]
 summary$grade <- as.factor(summary$grade)
+summary$grade4 <- FALSE
+summary$recurrence <- TRUE
+summary[which(summary$patientID %in% merged[which(merged$Tumor=='Primary'),]$Patient),]$recurrence <- FALSE
+summary[which(summary$grade == 4),]$grade4 <- TRUE
+summary$IDHwtTERT <- FALSE
+summary[which(summary$molType=='IDH-wt'),]$IDHwtTERT <- TRUE
 summary$medians <- aggregate(merged[,'purity'], list(merged$Patient), median)$x
-summary$variance <- aggregate(merged[,'purity'], list(merged$Patient), var)$x
+summary$mad <- aggregate(merged[,'purity'], list(merged$Patient), mad)$x
+patientOrderCCFmad <- summary[order(summary$mad),]$patientID
 
-# plot medians by molType (i.e. subtype)
-boxplot(summary$medians~summary$molType, ylab = 'Estimated Median Purity', las='2', col='grey')
-TukeyHSD(aov(summary$medians~summary$molType))
+# plot variance by molType (i.e. subtype)
+summaryNoP452 <- summary[which(!summary$patientID=='P452'),]
+boxplot(summaryNoP452$mad~summaryNoP452$IDHwtTERT, ylab = 'Estimated Purity MAD', las='2', col='grey')
+wilcox.test(summaryNoP452$mad~summaryNoP452$IDHwtTERT)
 
-# look at variance for medians by subtype
-aggregate(summary[,'medians'], list(summary$molType), var)
+# plot boxplot ordered by variance in purity
+merged$Patient <- factor(merged$Patient, levels=patientOrderCCFmad)
+boxplot(merged$purity~merged$Patient, col = 'grey72', ylab = 'Estimated CCF', las='2')
+mergedSM <- merged[which(merged$SampleType == 'SM'),]
+mergednonSM <- merged[which(merged$SampleType == 'non-SM'),]
+stripchart(mergedSM$purity~mergedSM$Patient, vertical = TRUE, #separated out sm and non sm as gives control to color them separately
+           method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5)
+stripchart(mergednonSM$purity~mergednonSM$Patient, vertical = TRUE, 
+           method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5)
+
+# set patient level order (Oligo, Astro, GBM, with Primaries always before Recurrences)
+merged$Patient <- factor(merged$Patient, levels=patientOrder)
 
 # enhancing vs non-enhancing
 mergedWithE <- merged[which(!is.na(merged$MREnhancementWithContrast)),]
@@ -125,7 +152,6 @@ ggplot(gbmMerged, aes(y=purity, x=Percent.necrosis)) +
 ggplot(gbmMerged, aes(x=Percent.necrosis, y=purity, colour=Patient.y)) +
   geom_point(size=.8) +
   geom_smooth(aes(colour=factor(Patient.y)), method = "lm", se=F)
- 
 plot(gbmMerged$purity,gbmMerged$Percent.necrosis)
 
 # pull out mean clonal VAF info for each sample
@@ -173,4 +199,6 @@ ggplot(toPlot, aes(x=x2_meanTumorWideVAFs, y=purity)) +
                   aes(label = paste("P-value = ", signif(..p.value.., digits = 4), sep = "")),
                   label.x.npc = 'right', label.y.npc = 0.4, size = 3) +
   facet_wrap(~patient)
+
+
 
