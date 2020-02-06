@@ -165,14 +165,14 @@ modelsPath <- paste0(dataPath, '/3Dmodels/',patientID,'/',sf)
 # Retreive sample model files
 sampleModelFiles <- mixedsort(list.files(modelsPath, pattern="coordinates_samples.rds"))
 
-# Also generate a longer names object that will match the exome sample identifier
-sampleID_long <- paste0(tumorPrefix,names)
-
 # Read in sample models
 sampleCenters <- lapply(paste0(modelsPath, '/', sampleModelFiles), readRDS)[[1]]#this should be a list of all subdirectories in the main sample dir, each containing dicoms for a single data point
 
 # Create names object
 names <- rownames(sampleCenters)
+
+# Also generate a longer names object that will match the exome sample identifier
+sampleID_long <- paste0(tumorPrefix,names)
 
 # Set up default colors
 colors <- rep('blue', length(sampleModels))
