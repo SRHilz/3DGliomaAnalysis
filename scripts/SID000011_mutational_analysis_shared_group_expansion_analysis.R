@@ -289,7 +289,7 @@ fit <- cascadeKM(scale(dissimilarity, center = TRUE,  scale = TRUE), 1, 30, iter
 plot(fit, sortg = TRUE, grpmts.plot = TRUE)
 
 # Cut the tree
-if (patientID=="Patient303" | patientID=="Patient450" | patientID=='Patient260'){
+if (patientID=="Patient303" | patientID=="Patient450" | patientID=='Patient260' | patientID=="Patient482"){
   optimal.k=5
 }
 if (patientID=="Patient327" | patientID=="Patient453" | patientID=="Patient454"){
@@ -297,9 +297,6 @@ if (patientID=="Patient327" | patientID=="Patient453" | patientID=="Patient454")
 }
 if (patientID=="Patient375" | patientID=="Patient413"){
   optimal.k=3
-}
-if (patientID=="Patient482"){
-  optimal.k=7
 }
 if (patientID=="Patient300"){
   optimal.k=6
@@ -389,8 +386,7 @@ plot(rep(1,10), col=rbPal(10),pch=15, cex=3, xlim=c(1,40), axes=F, ann=F)
 
 ## PART 2 - only run this code once you have generated everything above for all patients you use here
 # Final aggregate figure 
-patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453','Patient300','Patient450','Patient260','Patient452','Patient482',"Patient413",'Patient454','Patient276')
-IDHmutLGG <- c("Patient303","Patient327",'Patient375','Patient453','Patient482')
+patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453','Patient450','Patient260','Patient452','Patient482',"Patient413",'Patient454','Patient276')
 IDHwtTERTp <- c("Patient413",'Patient454','Patient276')
 Recurrent <- c("Patient300","Patient260",'Patient450','Patient276')
 toPlotFinal <- c()
