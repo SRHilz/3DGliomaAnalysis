@@ -21,7 +21,7 @@ source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications
 # User-defined variables
 tag <- 'SID000004'
 outfolder <- 'SID000004_rnaseq_expression_distances_intra_inter/'
-CPMFile <- paste0(dataPath,'SID000003_20190529_first_submission.symbol.coding.CPMs.csv')
+CPMFile <- paste0(dataPath,'SID000003_20190913_expanded_gbm.symbol.coding.CPMs.csv')
 purityCutoff <- .7 #only used for subset of analyses
 
 ## Get sample metadata
