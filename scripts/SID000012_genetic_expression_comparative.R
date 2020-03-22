@@ -93,17 +93,18 @@ for (i in rev(seq_along(patients))){
   print(patientID)
   color <- colors[i]
   patientSubset <- expressionDifference[which(expressionDifference$Patient1 == patientID),]
-  testResult <- cor.test(patientSubset$snvs_different, patientSubset$dissimilarity, method="spearman")
+  testResult <- cor.test(patientSubset$snvs_different, patientSubset$dissimilarity, method="pearson")
   p=formatC(testResult$p.value,format = "e", digits = 2)
-  rho=round(testResult$estimate,3)
+  R=round(testResult$estimate,3)
   lmResult <- lm(patientSubset$dissimilarity~patientSubset$snvs_different)
   m <- round(coef(lmResult)["patientSubset$distance"],2)
   b <- round(coef(lmResult)["(Intercept)"],2)
-  label <- paste0('p=',p,', rho=',rho,', y = ',m,'x + ',b)
+  label <- paste0('p=',p,', R=',R,', y = ',m,'x + ',b)
   dataText <- rbind(dataText, c(p,rho,label,x,y,m,b,color,patientID), stringsAsFactors=F)
   y <- y + 1.5
 }
-colnames(dataText) <- c('p','rho','label','x','y','m','b','color','patient')
+colnames(dataText) <- c('p','R','label','x','y','m','b','color','patient')
+dataText$p.adj<- p.adjust(dataText$p, method='BH')
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
 write.table(dataText, file=paste0(outputPath,outfolder,tag,'genetic_difference_vs_expression_dissimilarity_stats.txt'),sep='\t', quote=F, row.names = F)
