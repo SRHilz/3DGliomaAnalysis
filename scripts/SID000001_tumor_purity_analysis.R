@@ -113,13 +113,18 @@ summary$medians <- aggregate(merged[,'purity'], list(merged$Patient), median)$x
 summary$mad <- aggregate(merged[,'purity'], list(merged$Patient), mad)$x
 patientOrderCCFmad <- summary[order(summary$mad),]$patientID
 
+# plot medians by mad colored by IDH-wtTPM
+summary$color <- 'black'
+summary[which(summary$IDHwtTERT==TRUE),]$color <- '#823119'
+plot(summary$median, summary$mad, col=as.character(summary$color), pch=20, cex=2)
+
 # plot variance by molType (i.e. subtype)
 summaryNoP452 <- summary[which(!summary$patientID=='P452'),]
 boxplot(summaryNoP452$mad~summaryNoP452$IDHwtTERT, ylab = 'Estimated Purity MAD', las='2', col='grey')
 wilcox.test(summaryNoP452$mad~summaryNoP452$IDHwtTERT)
 
 # plot boxplot ordered by variance in purity
-merged$Patient <- factor(merged$Patient, levels=patientOrderCCFmad)
+merged$Patient <- factor(merged$Patient, levels=orderToUse)
 boxplot(merged$purity~merged$Patient, col = 'grey72', ylab = 'Estimated CCF', las='2')
 mergedSM <- merged[which(merged$SampleType == 'SM'),]
 mergednonSM <- merged[which(merged$SampleType == 'non-SM'),]
@@ -130,6 +135,70 @@ stripchart(mergednonSM$purity~mergednonSM$Patient, vertical = TRUE,
 
 # set patient level order (Oligo, Astro, GBM, with Primaries always before Recurrences)
 merged$Patient <- factor(merged$Patient, levels=patientOrder)
+
+# create colors for radial plots 
+par(mar=c(1,1,1,1))
+mergedSMNoP302 <- mergedSM[which(!mergedSM$Patient == 'P302'),]
+for (p in unique(mergedSMNoP302$Patient)){
+  print(p)
+  patientSubset <- mergedSMNoP302[which(mergedSMNoP302$Patient==p),]
+  metricOfInterest <- 'DistCentroid'
+  values <- patientSubset[order(patientSubset[,metricOfInterest]),c(metricOfInterest,'purity')]
+  values$normedDist <- round(values[,metricOfInterest]/max(values[,metricOfInterest]),2)
+  finalOutput <- data.frame(distance=numeric(), purity=numeric(), stringsAsFactors = F)
+  distanceStepSize <- 0.01
+  for (d in 1:(nrow(patientSubset)-1)){
+    print(d)
+    currentDistance <- values$normedDist[d]
+    currentPurity <- values$purity[d]
+    if (d == 1){ #should only happen once
+      distanceSpanStart <- seq(distanceStepSize,currentDistance,distanceStepSize)
+      spanBlockStart <- cbind(distanceSpanStart, currentPurity)
+      colnames(spanBlockStart) <- c('distance','purity')
+      finalOutput <- rbind(finalOutput, spanBlockStart)
+    } 
+    nextDistance <- values$normedDist[d+1]
+    nextPurity <- values$purity[d+1]
+    if (!currentDistance == nextDistance){
+      if (round((currentDistance + distanceStepSize),2) ==  round(nextDistance,2)){
+        distanceSpanBetween <- nextDistance
+      } else {
+        distanceSpanBetween <- seq(currentDistance + distanceStepSize, nextDistance, distanceStepSize)
+      }
+      distanceSpanBetweenSize <- length(distanceSpanBetween)
+      purityStepSize <- abs(nextPurity-currentPurity)/distanceSpanBetweenSize
+      if (currentPurity > nextPurity){
+        puritySpanBetween <- rev(seq(nextPurity, currentPurity, purityStepSize))[2:(distanceSpanBetweenSize+1)]
+      } else if (currentPurity < nextPurity){
+        puritySpanBetween <- seq(currentPurity, nextPurity, purityStepSize)[2:(distanceSpanBetweenSize+1)]
+      }  else { #if they are equal
+        puritySpanBetween <- rep(currentPurity, distanceSpanBetweenSize)
+      }
+      spanBlockBetween <- cbind(distanceSpanBetween,puritySpanBetween)
+      colnames(spanBlockBetween) <- c('distance','purity')
+      finalOutput <- rbind(finalOutput, spanBlockBetween)
+    }
+  }
+  # add on 0 and 1 to purity temporarily to include them in scale
+  originalLength <- nrow(finalOutput)
+  tmpAdd <- cbind(c(0,0),c(0,1))
+  colnames(tmpAdd) <- c('distance','purity')
+  finalOutput <- rbind(finalOutput, tmpAdd)
+  # get colors including extras
+  toColor <- finalOutput$purity
+  mappedColors <- rbPal(length(toColor))[as.numeric(cut(toColor,breaks = length(toColor)))][1:length(toColor)]
+  # remove tmp extras and add colors to data structure
+  finalOutput <- finalOutput[1:originalLength,]
+  finalOutput$purityColors <- mappedColors[1:originalLength]
+  # plot!
+  jpeg(paste0(outputPath, outfolder, tag, '_gradient_purity_by_', metricOfInterest, '_',p,'.jpeg'))
+  plot(1, type="n", xlab="", ylab="", xlim=c(0, 1), ylim=c(0, 1))
+  for (i in finalOutput$distance){
+    color <- as.character(finalOutput[which(finalOutput$distance==i),]$purityColors)
+    abline(h=i, col=color, lwd=4)
+  }
+  dev.off()
+}
 
 # enhancing vs non-enhancing
 mergedWithE <- merged[which(!is.na(merged$MREnhancementWithContrast)),]
