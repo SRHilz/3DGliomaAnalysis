@@ -1,11 +1,15 @@
-p	rho	label	x	y	m	b	color	patient
-6.03e-01	0.08	p=6.03e-01, rho=0.08, y = NAx + 0.01	0	40	NA	0.01	purple4	P450
-9.05e-04	0.875	p=9.05e-04, rho=0.875, y = NAx + 0.01	0	41.5	NA	0.01	darkmagenta	P302
-2.65e-01	0.39	p=2.65e-01, rho=0.39, y = NAx + 0.02	0	43	NA	0.02	darkorchid1	P300
-6.27e-01	-0.096	p=6.27e-01, rho=-0.096, y = NAx + 0.02	0	44.5	NA	0.02	red3	P454
-8.27e-01	0.051	p=8.27e-01, rho=0.051, y = NAx + 0.02	0	46	NA	0.02	firebrick4	P413
-7.59e-01	-0.071	p=7.59e-01, rho=-0.071, y = NAx + 0.02	0	47.5	NA	0.02	darkolivegreen4	P453
-6.52e-05	0.559	p=6.52e-05, rho=0.559, y = NAx + 0.01	0	49	NA	0.01	darkgreen	P375
-6.03e-02	0.316	p=6.03e-02, rho=0.316, y = NAx + 0.02	0	50.5	NA	0.02	mediumseagreen	P327
-2.06e-03	0.633	p=2.06e-03, rho=0.633, y = NAx + 0.01	0	52	NA	0.01	chartreuse	P303
-8.03e-01	-0.143	p=8.03e-01, rho=-0.143, y = NAx + 0.01	0	53.5	NA	0.01	blue	P41
+p	R	label	x	y	m	b	color	patient	p.adj
+1.31e-20	-0.143	p=1.31e-20, R=0.755, y = NAx + 0.01	0	40	NA	0.01	mediumpurple1	P260	1.834e-19
+5.32e-01	-0.143	p=5.32e-01, R=0.096, y = NAx + 0.01	0	41.5	NA	0.01	purple4	P450	0.7448
+4.39e-03	-0.143	p=4.39e-03, R=0.811, y = NAx + 0.01	0	43	NA	0.01	darkmagenta	P302	0.015365
+9.46e-01	-0.143	p=9.46e-01, R=0.085, y = NAx + 0.02	0	44.5	NA	0.02	darkorchid1	P300	0.975
+3.62e-02	-0.143	p=3.62e-02, R=0.84, y = NAx + 0	0	46	NA	0	salmon	P485	0.10136
+2.34e-01	-0.143	p=2.34e-01, R=0.933, y = NAx + 0.01	0	47.5	NA	0.01	orange	P475	0.364
+2.09e-01	-0.143	p=2.09e-01, R=-0.245, y = NAx + 0.02	0	49	NA	0.02	red2	P454	0.364
+8.47e-01	-0.143	p=8.47e-01, R=-0.045, y = NAx + 0.02	0	50.5	NA	0.02	firebrick4	P413	0.975
+7.78e-02	-0.143	p=7.78e-02, R=0.339, y = NAx + 0.01	0	52	NA	0.01	yellow3	P482	0.181533333333333
+8.13e-01	-0.143	p=8.13e-01, R=-0.055, y = NAx + 0.02	0	53.5	NA	0.02	darkolivegreen4	P453	0.975
+3.45e-05	-0.143	p=3.45e-05, R=0.576, y = NAx + 0.01	0	55	NA	0.01	darkgreen	P375	0.0002415
+9.57e-02	-0.143	p=9.57e-02, R=0.282, y = NAx + 0.02	0	56.5	NA	0.02	mediumseagreen	P327	0.1914
+1.62e-03	-0.143	p=1.62e-03, R=0.644, y = NAx + 0.01	0	58	NA	0.01	chartreuse	P303	0.00756
+9.75e-01	-0.143	p=9.75e-01, R=-0.017, y = NAx + 0.01	0	59.5	NA	0.01	blue	P41	0.975
