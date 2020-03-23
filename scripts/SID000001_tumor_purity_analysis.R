@@ -65,6 +65,13 @@ ggplot(pairwideDistances, aes(x=pairwideDistances$patient, y=distance)) +
   theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
   geom_boxplot(width=0.1)
 
+# create tumor size plot
+subtype3DAtlas <- subtypedata[which(subtypedata$PatientStudy=='3DAtlas'),]
+toPlot <- subtype3DAtlas$T2Volume
+names(toPlot) <- subtype3DAtlas$Patient
+toPlot <- toPlot[patientOrder[patientOrder %in% names(toPlot)]]
+barplot(toPlot, las=2 )
+
 # subset P260 by medial and lateral
 #merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(10))),]$Patient <- 'P260-l'
 #merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(from=11,to=20,by=1))),]$Patient <- 'P260-m'
