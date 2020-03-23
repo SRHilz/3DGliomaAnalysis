@@ -100,7 +100,7 @@ for (i in rev(seq_along(patients))){
   m <- round(coef(lmResult)["patientSubset$distance"],2)
   b <- round(coef(lmResult)["(Intercept)"],2)
   label <- paste0('p=',p,', R=',R,', y = ',m,'x + ',b)
-  dataText <- rbind(dataText, c(p,rho,label,x,y,m,b,color,patientID), stringsAsFactors=F)
+  dataText <- rbind(dataText, c(p,R,label,x,y,m,b,color,patientID), stringsAsFactors=F)
   y <- y + 1.5
 }
 colnames(dataText) <- c('p','R','label','x','y','m','b','color','patient')
