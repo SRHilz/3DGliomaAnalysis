@@ -207,9 +207,13 @@ colnames(patientVariance) <- c('patient','normedDifference_variance')
 patientMedians<- merge(patientVariance,patientMedians, by='patient')
 patientMedians$tumorType <- 'Primary'
 patientMedians[which(patientMedians$patient %in% unique(callsPerSampleSubset[which(callsPerSampleSubset$tumorType=='Recurrence1'),]$patient)),]$tumorType <- 'Recurrent'
+patientMedians$tumorSubtype <- 'IDH-wt'
+patientMedians[as.character(patientMedians$patient) %in% gsub('P','Patient',as.character(subtypedata[subtypedata$IDH_Mut == 1,]$Patient)),]$tumorSubtype <- 'IDH-mut'
 wilcox.test(patientMedians$normedDifference_medians~patientMedians$tumorType)
 wilcox.test(patientMedians$normedDifference_var~patientMedians$tumorType)
 boxplot(patientMedians$normedDifference_medians~patientMedians$tumorType, col='grey', ylab='Median normalized genetic difference')
+wilcox.test(patientMedians$normedDifference_medians~patientMedians$tumorSubtype)
+boxplot(patientMedians$normedDifference_medians~patientMedians$tumorSubtype, col='grey', ylab='Median normalized genetic difference')
 
 ## Do multiple regression on distance vs snvs
 fit <- lm(snvs_different ~ spatial_distance + patient, data=callsPerSampleSubset)
