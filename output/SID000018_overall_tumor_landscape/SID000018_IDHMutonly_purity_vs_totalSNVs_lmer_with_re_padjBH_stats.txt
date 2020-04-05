@@ -1,0 +1,2 @@
+a	b	estimate	pvalue	corr.pvalue	isSignificant
+purity	totalSNVsCalled	0.129860306892236	0.000353936842847611	0.000353936842847611	1

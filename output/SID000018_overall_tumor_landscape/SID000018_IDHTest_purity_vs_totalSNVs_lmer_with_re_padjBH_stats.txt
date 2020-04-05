@@ -1,0 +1,2 @@
+a	b	estimate	pvalue	pvalueIDH	corr.pvalue	isSignificant
+purity	totalSNVsCalled	0.95225575555468	1.08788540817994e-15	0.388762248864552	1.08788540817994e-15	1
