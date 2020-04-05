@@ -6,6 +6,7 @@ library(ggplot2)
 library(dplyr)
 library(ggpmisc)
 library(stats)
+library(RColorBrewer)
 
 pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
@@ -121,9 +122,12 @@ summary$mad <- aggregate(merged[,'purity'], list(merged$Patient), mad)$x
 patientOrderCCFmad <- summary[order(summary$mad),]$patientID
 
 # plot medians by mad colored by IDH-wtTPM
+summary$shape <- 1
+summary[which(summary$IDHwtTERT==TRUE),]$shape <- 2
 summary$color <- 'black'
-summary[which(summary$IDHwtTERT==TRUE),]$color <- '#823119'
-plot(summary$median, summary$mad, col=as.character(summary$color), pch=20, cex=2)
+#summary[which(summary$IDHwtTERT==TRUE),]$color <- '#823119'
+summary[which(summary$patientID=='P452'),]$shape <- 0
+plot(summary$median, summary$mad, col=as.character(summary$color), pch=as.numeric(summary$shape), cex=2)
 
 # plot variance by molType (i.e. subtype)
 summaryNoP452 <- summary[which(!summary$patientID=='P452'),]
@@ -149,9 +153,13 @@ mergedSMNoP302 <- mergedSM[which(!mergedSM$Patient == 'P302'),]
 for (p in unique(mergedSMNoP302$Patient)){
   print(p)
   patientSubset <- mergedSMNoP302[which(mergedSMNoP302$Patient==p),]
-  metricOfInterest <- 'DistCentroid'
+  metricOfInterest <- 'DistPeriph'
   values <- patientSubset[order(patientSubset[,metricOfInterest]),c(metricOfInterest,'purity')]
   values$normedDist <- round(values[,metricOfInterest]/max(values[,metricOfInterest]),2)
+  if (metricOfInterest == 'DistPeriph'){
+    values$normedDist <- 1-values$normedDist
+    values <- values[order(values$normedDist),]
+  } 
   finalOutput <- data.frame(distance=numeric(), purity=numeric(), stringsAsFactors = F)
   distanceStepSize <- 0.01
   for (d in 1:(nrow(patientSubset)-1)){
@@ -159,6 +167,7 @@ for (p in unique(mergedSMNoP302$Patient)){
     currentDistance <- values$normedDist[d]
     currentPurity <- values$purity[d]
     if (d == 1){ #should only happen once
+      if (currentDistance < distanceStepSize){currentDistance <- distanceStepSize}
       distanceSpanStart <- seq(distanceStepSize,currentDistance,distanceStepSize)
       spanBlockStart <- cbind(distanceSpanStart, currentPurity)
       colnames(spanBlockStart) <- c('distance','purity')
@@ -166,7 +175,7 @@ for (p in unique(mergedSMNoP302$Patient)){
     } 
     nextDistance <- values$normedDist[d+1]
     nextPurity <- values$purity[d+1]
-    if (!currentDistance == nextDistance){
+    if (!round(currentDistance,2) == round(nextDistance,2)){
       if (round((currentDistance + distanceStepSize),2) ==  round(nextDistance,2)){
         distanceSpanBetween <- nextDistance
       } else {
@@ -193,7 +202,8 @@ for (p in unique(mergedSMNoP302$Patient)){
   finalOutput <- rbind(finalOutput, tmpAdd)
   # get colors including extras
   toColor <- finalOutput$purity
-  mappedColors <- rbPal(length(toColor))[as.numeric(cut(toColor,breaks = length(toColor)))][1:length(toColor)]
+  colfunc <- colorRampPalette(c("black", "white"))
+  mappedColors <- colfunc(length(toColor))[as.numeric(cut(toColor,breaks = length(toColor)))][1:length(toColor)]
   # remove tmp extras and add colors to data structure
   finalOutput <- finalOutput[1:originalLength,]
   finalOutput$purityColors <- mappedColors[1:originalLength]
@@ -206,6 +216,10 @@ for (p in unique(mergedSMNoP302$Patient)){
   }
   dev.off()
 }
+#make gradient for colorbar
+par(mfrow=c(1,1))
+plot(rep(1,10), col=colfunc(10),pch=15, cex=3, xlim=c(1,40), axes=F, ann=F)
+
 
 # enhancing vs non-enhancing
 mergedWithE <- merged[which(!is.na(merged$MREnhancementWithContrast)),]
