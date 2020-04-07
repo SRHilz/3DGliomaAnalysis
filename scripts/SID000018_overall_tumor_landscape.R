@@ -151,8 +151,8 @@ plotFinal <- function(ResultsIDHMut, ResultsIDHWT,  outstatsFileName){
   colOrder <- order(rowMeans(mofInterest))
   rowOrder <- c('estimate.IDHMut','estimate.IDHWT')
   mofInterest <- t(mofInterest)[rowOrder,colOrder]
-  break1 <- -.001
-  break2 <- .001
+  break1 <- -.1
+  break2 <- .1
   absolute <- max(abs(mofInterest), na.rm=T)
   pdf(paste0(outFolder, outstatsFileName), width=10, height=10)
   my_palette <- colorRampPalette(c("blue", "grey", "red"))(n = 299)
@@ -499,6 +499,15 @@ distancePurityResultsIDHWT <- modelDistances(mtmp[which(mtmp$IDH_Mut==0 & mtmp$T
 testName <- '_IDHTest_distance_vs_purity_lmer_with_re_padjBH_'
 distancePurityResultsIDHTest <- modelIDHInteractDistance(mtmp, toTest, NA, paste0(tag,testName, 'stats.txt'),paste0(tag,testName, 'heatmap.pdf'), 0)
 
+# final plot
+testName <- '_summary_distance_vs_purity_lmer_with_re_padjBH_'
+DuplicateRowIDHMut <- rbind(distancePurityResultsIDHMut[which(distancePurityResultsIDHMut$a=='DistVR'),],distancePurityResultsIDHMut[which(distancePurityResultsIDHMut$a=='DistVR'),])
+DuplicateRowIDHMut[2,'b'] <- 'purity_dup'
+DuplicateRowIDHWT <- rbind(distancePurityResultsIDHWT[which(distancePurityResultsIDHWT$a=='DistVR'),],distancePurityResultsIDHWT[which(distancePurityResultsIDHWT$a=='DistVR'),])
+DuplicateRowIDHWT[2,'b'] <- 'purity_dup'
+plotFinal(DuplicateRowIDHMut, DuplicateRowIDHWT, paste0(tag,testName,'_composite_heatmap.pdf'))
+
+
 ###
 # b) Cancer signatures
 toTest <- as.vector(dataTypes['CancerSEA'] %>% unlist)
@@ -518,6 +527,10 @@ distanceCancerSignaturesResultsIDHWT <- modelDistances(mtmp[which(mtmp$IDH_Mut==
 testName <- '_IDHTest_distance_vs_cancersignatures_lmer_with_re_padjBH_'
 distanceCancerSignaturesResultsIDHTest <- modelIDHInteractDistance(mtmp, toTest, purityCancerSignaturesResults, paste0(tag,testName,'stats.txt'),paste0(tag,testName,'heatmap.pdf'), 1) #we do correct for purity with these because is a propery of cancer cells we are interested in
 
+# final cancer sig plot
+testName <- '_summary_distance_vs_cancersignatures_lmer_with_re_padjBH_'
+plotFinal(distanceCancerSignaturesResultsIDHMut[which(distanceCancerSignaturesResultsIDHMut$a=='DistVR'),], distanceCancerSignaturesResultsIDHWT[which(distanceCancerSignaturesResultsIDHWT$a=='DistVR'),], paste0(tag,testName,'_composite_heatmap.pdf'))
+
 ###
 # c) Brain cell types (Oldham)
 toTest <- as.vector(dataTypes['OldhamDecon'] %>% unlist)
@@ -536,3 +549,8 @@ distanceOldhamCellTypesResultsIDHWT <- modelDistances(mtmp[which(mtmp$IDH_Mut==0
 # finally tests for idh impact
 testName <- '_IDHTest_distance_vs_oldhambraincelltypes_lmer_with_re_padjBH_'
 distanceOldhamCellTypesResultsIDHTest <- modelIDHInteractDistance(mtmp, toTest, NA, paste0(tag,testName,'stats.txt'),paste0(tag,testName,'heatmap.pdf'), 0) 
+
+# final cancer sig plot
+testName <- '_summary_distance_vs_oldhambraincelltypes_lmer_with_re_padjBH_'
+plotFinal(distanceOldhamCellTypesResultsIDHMut[which(distanceOldhamCellTypesResultsIDHMut$a=='DistVR'),], distanceOldhamCellTypesResultsIDHWT[which(distanceOldhamCellTypesResultsIDHWT$a=='DistVR'),], paste0(tag,testName,'_composite_heatmap.pdf'))
+
