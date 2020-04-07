@@ -150,51 +150,63 @@ merged$Patient <- factor(merged$Patient, levels=patientOrder)
 # create colors for radial plots 
 par(mar=c(1,1,1,1))
 mergedSMNoP302 <- mergedSM[which(!mergedSM$Patient == 'P302'),]
+distanceStepSize <- 0.01
 for (p in unique(mergedSMNoP302$Patient)){
   print(p)
   patientSubset <- mergedSMNoP302[which(mergedSMNoP302$Patient==p),]
-  metricOfInterest <- 'DistPeriph'
+  metricOfInterest <- 'DistVR'
   values <- patientSubset[order(patientSubset[,metricOfInterest]),c(metricOfInterest,'purity')]
-  values$normedDist <- round(values[,metricOfInterest]/max(values[,metricOfInterest]),2)
-  if (metricOfInterest == 'DistPeriph'){
-    values$normedDist <- 1-values$normedDist
-    values <- values[order(values$normedDist),]
-  } 
+  if (metricOfInterest=='DistVR'){
+    offset <- min(values[,metricOfInterest])
+    values$normedDist <- round((values[,metricOfInterest]-offset)/(max(values[,metricOfInterest])-offset),2)
+  } else {
+    values$normedDist <- round(values[,metricOfInterest]/max(values[,metricOfInterest]),2)
+  }
+  # we first make sure each normed distance is uniqe. If it isn't, we take the mean of all purities at that distance
+  redundantNormedDist <- names(table(values$normedDist)[which(table(values$normedDist) > 1)])
+  for (rd in redundantNormedDist){
+    meanPurity <- mean(values[which(values$normedDist == round(as.numeric(rd),2)),]$purity)
+    values[which(values$normedDist == round(as.numeric(rd),2)),]$purity <- meanPurity
+    values[which(values$normedDist == round(as.numeric(rd),2)),]$DistVR <- 9999 #tag to show is merged
+    values <- unique(values)
+  }
+  # then we step through each distance break
   finalOutput <- data.frame(distance=numeric(), purity=numeric(), stringsAsFactors = F)
-  distanceStepSize <- 0.01
-  for (d in 1:(nrow(patientSubset)-1)){
+  for (d in 1:(nrow(values)-1)){
     print(d)
-    currentDistance <- values$normedDist[d]
+    currentDistance <- round(values$normedDist[d],2)
     currentPurity <- values$purity[d]
+    nextDistance <- round(values$normedDist[d+1],2)
+    nextPurity <- values$purity[d+1]
     if (d == 1){ #should only happen once
-      if (currentDistance < distanceStepSize){currentDistance <- distanceStepSize}
+      if (currentDistance < distanceStepSize){currentDistance <- distanceStepSize} #for rare cases where normedDist is 0, we advance to step size
       distanceSpanStart <- seq(distanceStepSize,currentDistance,distanceStepSize)
       spanBlockStart <- cbind(distanceSpanStart, currentPurity)
       colnames(spanBlockStart) <- c('distance','purity')
       finalOutput <- rbind(finalOutput, spanBlockStart)
     } 
-    nextDistance <- values$normedDist[d+1]
-    nextPurity <- values$purity[d+1]
-    if (!round(currentDistance,2) == round(nextDistance,2)){
-      if (round((currentDistance + distanceStepSize),2) ==  round(nextDistance,2)){
-        distanceSpanBetween <- nextDistance
-      } else {
-        distanceSpanBetween <- seq(currentDistance + distanceStepSize, nextDistance, distanceStepSize)
-      }
-      distanceSpanBetweenSize <- length(distanceSpanBetween)
-      purityStepSize <- abs(nextPurity-currentPurity)/distanceSpanBetweenSize
-      if (currentPurity > nextPurity){
-        puritySpanBetween <- rev(seq(nextPurity, currentPurity, purityStepSize))[2:(distanceSpanBetweenSize+1)]
-      } else if (currentPurity < nextPurity){
-        puritySpanBetween <- seq(currentPurity, nextPurity, purityStepSize)[2:(distanceSpanBetweenSize+1)]
-      }  else { #if they are equal
-        puritySpanBetween <- rep(currentPurity, distanceSpanBetweenSize)
-      }
-      spanBlockBetween <- cbind(distanceSpanBetween,puritySpanBetween)
-      colnames(spanBlockBetween) <- c('distance','purity')
-      finalOutput <- rbind(finalOutput, spanBlockBetween)
+    if (round((currentDistance + distanceStepSize),2) ==  nextDistance){ # if 
+      distanceSpanBetween <- nextDistance
+    } else {
+      distanceSpanBetween <- seq(currentDistance + distanceStepSize, nextDistance, distanceStepSize)
     }
+    distanceSpanBetweenSize <- length(distanceSpanBetween)
+    purityStepSize <- abs(nextPurity-currentPurity)/distanceSpanBetweenSize
+    if (currentPurity > nextPurity){
+      puritySpanBetween <- rev(seq(nextPurity, currentPurity, purityStepSize))[2:(distanceSpanBetweenSize+1)]
+    } else if (currentPurity < nextPurity){
+      puritySpanBetween <- seq(currentPurity, nextPurity, purityStepSize)[2:(distanceSpanBetweenSize+1)]
+    }  else { #if they are equal
+      puritySpanBetween <- rep(currentPurity, distanceSpanBetweenSize)
+    }
+    spanBlockBetween <- cbind(distanceSpanBetween,puritySpanBetween)
+    colnames(spanBlockBetween) <- c('distance','purity')
+    finalOutput <- rbind(finalOutput, spanBlockBetween)
   }
+  if (metricOfInterest == 'DistPeriph'){
+    finalOutput$distance <- 1.01-finalOutput$distance
+    finalOutput <- finalOutput[order(finalOutput$distance),]
+  } 
   # add on 0 and 1 to purity temporarily to include them in scale
   originalLength <- nrow(finalOutput)
   tmpAdd <- cbind(c(0,0),c(0,1))
