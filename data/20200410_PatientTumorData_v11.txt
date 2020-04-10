@@ -1,0 +1,44 @@
+Patient	SurgeryNumber	PatientStudy	Tumor	Histology	IDH_Mut	1p19q	7gain10loss	TERT	Grade	AgeAtSampleCollection	Sex	Race	Ethnicity	Treatment	Resection	T2Volume	vrCoordinates	Color	
+P453	SF11690	3DAtlas	Primary	Astro	1	0	0	NA	2	28	M	White/Caucasian	Not Hispanic/Latino	none	NTR	81937.73	"9.503,-24.052,56.131"	darkolivegreen4	
+P260	SF11294	3DAtlas	Recurrence1	GBM	1	0	0	0	4	28	F	White/Caucasian	Hispanic/Latino	none	NTR	105626.53	"-5.815,-47.169,26.919"	mediumpurple1	
+P327	SF10932	3DAtlas	Primary	Astro	1	0	0	0	3	30	F	White/Caucasian	Not Hispanic/Latino	none	GTR	65636.8	"5.096,-21.803,26.285"	mediumseagreen	
+P375	SF11136	3DAtlas	Primary	Astro	1	0	0	0	2	34	M	White/Caucasian	Hispanic/Latino	none	NTR	172093.32	"0.284,-23.333,-2.766"	darkgreen	
+P303	SF10809	3DAtlas	Primary	Astro	1	0	0	0	2	38	M	White/Caucasian	Not Hispanic/Latino	none	STR	62833.69	"-1.546,-24.668,36.905"	chartreuse	
+P340	SF11055	3DAtlas	Primary	Oligo	1	1	0	1	2	39	F	White/Caucasian	Not Hispanic/Latino	none	STR	87904.6	"2.267,-37.615,-6.928"	steelblue1	
+P302	SF10788	3DAtlas	Recurrence1	Oligo	1	1	0	1	3	45	F	Other	Hispanic/Latino	XRT	STR	NA	NA	darkmagenta	
+P300	SF10711	3DAtlas	Recurrence1	Astro	1	0	0	0	2	58	M	Other	Hispanic/Latino	none	STR	110990.86	"-1.113,-23.145,20.407"	darkorchid1	
+P452	SF11644	3DAtlas	Primary	GBM	0	0	0	0	4	58	M	Other	Hispanic/Latino	none	NTR	113508.72	"-1.961,-24.760,42.168"	darkorange1	
+P454	SF11731	3DAtlas	Primary	GBM	0	0	1	1	4	60	F	White/Caucasian	Not Hispanic/Latino	none	STR	86950.96	"37.941,-38.841,-5.851"	red2	
+P413	SF11173	3DAtlas	Primary	GBM	0	0	1	1	4	63	M	White/Caucasian	Not Hispanic/Latino	none	GTR	79110	"2.632,-32.176,25.716"	firebrick4	
+P372	SF11046	3DAtlas	Primary	GBM	0	0	1	1	4	64	M	White/Caucasian	Not Hispanic/Latino	none	NTR	240075.53	"6.209,-19.803,41.759"	lightpink	
+P450	SF11612	3DAtlas	Recurrence1	Oligo	1	1	0	1	3	67	M	White/Caucasian	Not Hispanic/Latino	none	STR	90647.27	"12.343,-21.521,43.193"	purple4	
+P373	SF11048	3DAtlas	Primary	GBM	0	0	1	1	4	71	M	White/Caucasian	Hispanic/Latino	none	NTR	176807.1	"1.283,-27.162,22.965"	salmon4	
+P457	SF11915	3DAtlas	Primary	GBM	0	0	1	1	4	75	M	White/Caucasian	Not Hispanic/Latino	none	NTR	73176.64	"2.779,-23.632,27.053"	hotpink	
+P455	SF11901	3DAtlas	Primary	GBM	0	0	0	1	4	77	F	White/Caucasian	Not Hispanic/Latino	none	STR	90774.13	"7.176,-6.240,30.699"	orangered	
+P482	SF12225	3DAtlas	Primary	GBM	1	0	0	0	4	67	F	White/Caucasian	Not Hispanic/Latino	none	GTR	98820.13	"-11.863,-14.349,13.268"	yellow3	
+P475	SF12180	3DAtlas	Primary	GBM	0	0	1	1	4	66	M	White/Caucasian	Not Hispanic/Latino	none	GTR	43524.55	"5.956,-17.974,30.777"	orange 	
+P481	SF12209	3DAtlas	Recurrence1	GBM	0	0	1	1	4	72	F	White/Caucasian	Not Hispanic/Latino	"XRT, TMZ"	STR	122800.42	"-6.450,-26.626,7.589"	palevioletred3	
+P485	SF12300	3DAtlas	Primary	GBM	0	0	1	1	4	44	M	White/Caucasian	Not Hispanic/Latino	none	GTR	3048.35	"3.793,-42.625,38.175"	salmon 	
+P276	SF11054	3DAtlas	Recurrence1	GBM	0	0	1	1	4	48	F	White/Caucasian	Not Hispanic/Latino	"XRT,TMZ,durvalumab,bevacizumab"	NTR	136164.36	"-3.672,15.510,27.894"	mediumorchid1	
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
