@@ -196,14 +196,14 @@ getMutsBin <- function(avfile){ #from Tali's phylo tree code, pulls out all cove
 }
 
 ## PART 1 - Patient-specific analysis - for one patient at a time (aggregate analysis for final fig at end)
+# read in config file info
+source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
+
 # specify which patient you want to use and file paths
-patientID <- 'Patient276'
+patientID <- 'Patient260'
 cancerCensusGenesPath <- paste0(dataPath,'cancer_gene_census.csv')
 outfolder <- 'SID000011_mutational_analysis_shared_group_expansion_analysis/'
 purityCutoff <- .7
-
-# read in config file info
-source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 # read in sample data file
 data <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
@@ -268,6 +268,12 @@ toPlot <- vafs
 genes <- sapply(rownames(toPlot), getGene)
 annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesPath)
 heatmap.2(toPlot, trace="none", sepcolor='black', colsep=1:ncol(toPlot), rowsep=1:nrow(toPlot),sepwidth=c(0.01,0.01), colRow=annotationColors, margins=c(13,13))
+# post-clustering - a plot like the one above, but grouped by expansion event; allows visualization of vafs in expansion; used for P260 
+# cl260 <- read.table('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/output/SID000011_mutational_analysis_shared_group_expansion_analysis/Patient260_clusters_post_filtering.txt', sep='\t', header=F)
+#toPlotPostCluster <- toPlot[as.character(cl260[order(cl260$V2),]$V1),]
+#toPlotPostCluster <- toPlotPostCluster[,as.character(mixedsort(colnames(toPlotPostCluster)))]
+#my_palette <- gray.colors(299, start=0, end=1) 
+#heatmap.2(toPlotPostCluster, Rowv=F, Colv=F, trace="none", col=my_palette, dendrogram='none', sepcolor='black', colsep=1:ncol(toPlot), rowsep=1:nrow(toPlot),sepwidth=c(0.01,0.01), colRow=annotationColors, margins=c(13,13))
 
 # final create a correlation matrix
 correlation <- cor(t(toPlot), method="pearson")
