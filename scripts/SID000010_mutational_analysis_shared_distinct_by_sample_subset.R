@@ -80,7 +80,7 @@ source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications
 #  if there are more samples than samplesPerPatientToUse, will average result from all possible combinations
 #  of this number.
 purityCutoff <- .7
-patientsToUse <- c('Patient41','Patient49','Patient303','Patient327','Patient375','Patient453','Patient482','Patient413','Patient454','Patient475','Patient485','Patient260','Patient276','Patient300','Patient302','Patient450')
+patientsToUse <- c('Patient303','Patient327','Patient375','Patient453','Patient482','Patient413','Patient454','Patient475','Patient485','Patient260','Patient276','Patient300','Patient302','Patient450')
 samplesPerPatientToUse <- 2 # cannot use NA for this analysis
 
 # read in sample data file

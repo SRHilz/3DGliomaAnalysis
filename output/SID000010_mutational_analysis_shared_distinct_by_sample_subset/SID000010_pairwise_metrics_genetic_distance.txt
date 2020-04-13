@@ -1,16 +1,4 @@
 patient	samples	spatial_distance	snvs_shared	snvs_different	tumorType	normedDifference
-Patient41	Primary-V,Primary-P	9.59839569928225	12	7	Primary	0.72928854147193
-Patient41	Primary-V,Primary-Y	9.11953397932153	8	16	Primary	1.75447561643828
-Patient41	Primary-V,Primary-G	7.5492648648726	12	9	Primary	1.19216906031179
-Patient41	Primary-P,Primary-Y	6.4369791051393	8	15	Primary	2.33028564408792
-Patient41	Primary-P,Primary-G	11.4757047713855	12	8	Primary	0.697124939981715
-Patient41	Primary-Y,Primary-G	13.6404875279442	8	17	Primary	1.24628976531619
-Patient49	Primary-Y,Primary-G	15.962759786453	12	6	Primary	0.375874853738762
-Patient49	Primary-Y,Primary-P	14.7940596186442	10	10	Primary	0.675946985328996
-Patient49	Primary-Y,Primary-C	11.9385761295056	13	6	Primary	0.502572495657277
-Patient49	Primary-G,Primary-P	2.01064666214628	10	12	Primary	5.96822914036546
-Patient49	Primary-G,Primary-C	9.1485135404611	15	4	Primary	0.437229499886426
-Patient49	Primary-P,Primary-C	9.56987983205642	10	14	Primary	1.46292328071915
 Patient303	Primaryv2,Primaryv3	14.813014548025	16	12	Primary	0.810098441549155
 Patient303	Primaryv2,Primaryv4	12.7405062693756	15	10	Primary	0.78489816562761
 Patient303	Primaryv2,Primaryv5	21.5509303743481	13	20	Primary	0.928034180083744

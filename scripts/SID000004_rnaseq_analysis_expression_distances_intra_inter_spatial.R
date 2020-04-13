@@ -171,6 +171,7 @@ pheatmap(meanDissimilarityMatrix,
                                   Tumor = c('Recurrence1'='purple','Primary'='white'))
 )
 
+
 ## Now look at means within subtype, and further by if they are inter or intra
 toAnalyzeMeansWithinSubtype <- toAnalyzeMeans[which(toAnalyzeMeans$subtypeRelationship == 'within'),]
 patientsToDrop <- c('P452') #we drop our unique non-cannonical GBM from this analysis
@@ -212,9 +213,9 @@ for (p in unique(toAnalyzeWithinDistance$Patient1)){
   }
 }
 patientArray <- patientArray[which(!is.na(patientArray$distance)),]
-## normalize by distance and plot by patient
+## normalize by distance and plot by patient ## Ran twice - once with P452 dropped for boxplots, since this is a hypermutated patient and we don't want it dumped in with the others, and once with it present for scatter plot where it is separate so okay to be there
 patientArray$normedDissimilarity <- patientArray$dissimilarity/patientArray$distance
-patientsToDrop <- c('P260','P452')
+patientsToDrop <- c('P452') # 
 patientArray <- patientArray[which(!(patientArray$patient %in% patientsToDrop)),]
 unique(patientArray$patient) %in% patientOrderRec #check
 patientOrderRNAseq <- patientOrderRec[patientOrderRec %in% unique(patientArray$patient)]
@@ -272,19 +273,21 @@ write.table(dataText, file=paste0(outputPath,outfolder,tag,'spatial_distance_vs_
 ## Plot mean purity vs mean dissimilarity
 
 # Get list of unique patient pairings by selecting an arbitrary 'direction'
-selectedComboDirections = c()
-for (p1 in unique(toAnalyzeMeans$Patient1)){
-  for (p2 in unique(toAnalyzeMeans$Patient1)){
-    combo = paste0(p1,'_',p2)
-    reverseCombo = paste0(p2,'_',p1)
-    if (!reverseCombo%in%selectedComboDirections){
-      selectedComboDirections = c(selectedComboDirections,combo)
-    }
-  }
+allPatientCombinations = combn(unique(toAnalyzeMeans$Patient1),2)
+selectedComboDirections <- c()
+for (n in 1:ncol(allPatientCombinations)){
+  a <- as.character(allPatientCombinations[1,n])
+  b <- as.character(allPatientCombinations[2,n])
+  selectedComboDirections <- append(selectedComboDirections, paste0(a,'_',b))
 }
+withinCombinations <- paste0(unique(toAnalyzeMeans$Patient1),'_',unique(toAnalyzeMeans$Patient1))
+selectedComboDirections <- append(selectedComboDirections,withinCombinations)
 
 # Select these unique pairs from the degenerate dataframe
-toAnalyzeMeansUnique = toAnalyzeMeans[paste0(toAnalyzeMeans$Patient1,'_',toAnalyzeMeans$Patient2)%in%selectedComboDirections,]
+toAnalyzeMeansUnique <- toAnalyzeMeans[paste0(toAnalyzeMeans$Patient1,'_',toAnalyzeMeans$Patient2)%in%selectedComboDirections,]
+
+# Ensure our HM patient isn't included
+toAnalyzeMeansUnique <- toAnalyzeMeansUnique[which(!toAnalyzeMeansUnique$Patient1 == 'P452' | toAnalyzeMeansUnique$Patient2 == 'P452'),]
 
 # Make mean purity vs mean dissimilarity scatterplot
 ggplot(toAnalyzeMeansUnique[(toAnalyzeMeansUnique$subtypeRelationship=='within'),], aes(x = (purityMean1+purityMean2)/2, y = dissimilarityMean, color = factor(IDH_Mut1) , shape=patientRelationship ))+
