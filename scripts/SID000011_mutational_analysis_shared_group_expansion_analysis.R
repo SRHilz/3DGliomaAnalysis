@@ -200,7 +200,7 @@ getMutsBin <- function(avfile){ #from Tali's phylo tree code, pulls out all cove
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 # specify which patient you want to use and file paths
-patientID <- 'Patient260'
+patientID <- 'Patient452'
 cancerCensusGenesPath <- paste0(dataPath,'cancer_gene_census.csv')
 outfolder <- 'SID000011_mutational_analysis_shared_group_expansion_analysis/'
 purityCutoff <- .7
@@ -281,6 +281,8 @@ dissimilarity <- (1 - correlation)/2
 toPlot3 <- dissimilarity
 genes <- sapply(rownames(toPlot3), getGene)
 annotationColors <- getCensusGeneAnnotation(genes, cancerCensusGenesPath)
+#test <- toPlot3 #only for P452, to see gene names
+#rownames(test)[1:(nrow(test)-50)] <- 1:(nrow(test)-50) # change toPlot3 to test below for P452
 heatmap.2(toPlot3, trace="none", sepcolor='black', colsep=1:ncol(toPlot3), rowsep=1:nrow(toPlot3),sepwidth=c(0.01,0.01), colRow=annotationColors, col=bluered, margins=c(13,13))
 
 # #Identify optimal number for k (both Elbow method and Calinski) - can combine this info with hclust to know where to best cut the tree
