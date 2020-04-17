@@ -323,6 +323,8 @@ library(reshape2)
 library(ggpubr)
 library(lmerTest)
 library(pheatmap)
+library(stats)
+library(RColorBrewer)
 
 # read in config file info
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
@@ -405,11 +407,64 @@ dataTypes[['zrelTumorDistance']] <- c('zDistCentroid','zDistPeriph','zDistVR')
 dataTypes[['zWithinrelTumorDistance']] <- c('zWithinDistCentroid','zWithinDistPeriph','zWithinDistVR')
 dataTypes[['zPurity']] <- 'zPurity'
 mtmp$Patient <- as.factor(mtmp$Patient)
+mtmp <- mtmp[which(!mtmp$Patient == 'P452'),] 
 
 # for purity, fits a linear model to see its relationship to each cell type/state signature and corrects group for mult testing
 #  that controls for repeat measures 
 # running note - for some reason need to manually specify dataMatrix <- mtmp, or won't run.
 
+# MEDIANS AND VARIANCE (MAD)
+##### ##### #####
+# compute summary 
+toTest <- as.vector(dataTypes['OldhamDecon'] %>% unlist)
+cellTypeSummary <- list(median=c(), mad=c())
+for (i in seq_along(toTest)){
+  cellType <- toTest[i]
+  formula <- as.formula(paste(cellType, "~ Patient"))
+  medianToBind <- aggregate(formula, data=mtmp, median)
+  madToBind <- aggregate(formula, data=mtmp, mad)
+  if (i == 1){ # set up data structure
+    cellTypeSummary[['median']] <- data.frame(medianToBind)
+    colnames(cellTypeSummary[['median']]) <- c('Patient',cellType)
+    cellTypeSummary[['median']]$IDHstatus <- 0
+    cellTypeSummary[['median']][which(cellTypeSummary[['median']]$Patient %in% unique(as.character(mtmp[mtmp$IDH_Mut==1,]$Patient))),]$IDHstatus <- 1
+    cellTypeSummary[['mad']] <- data.frame(madToBind)
+    colnames(cellTypeSummary[['mad']]) <- c('Patient',cellType)
+    cellTypeSummary[['mad']]$IDHstatus <- 0
+    cellTypeSummary[['mad']][which(cellTypeSummary[['mad']]$Patient %in% unique(as.character(mtmp[mtmp$IDH_Mut==1,]$Patient))),]$IDHstatus <- 1
+  } else {
+    cellTypeSummary[['median']] <- merge(cellTypeSummary[['median']], medianToBind, by='Patient')
+    cellTypeSummary[['mad']] <- merge(cellTypeSummary[['mad']], madToBind, by='Patient')
+  }
+}
+# plot
+typeOrder <- c('microgliamacro','m1macro','ependymal','astrocytes','lymphocytes','endothelial','granulocyte','oligodendrocytes','astrocytes2','neuron')
+ofInterest <- 'median'
+toPlot <- melt(cellTypeSummary[[ofInterest]], id.vars=c('Patient','IDHstatus'))
+toPlot$IDHstatus <- factor(toPlot$IDHstatus, levels=c(1,0))
+toPlot$variable <- factor(toPlot$variable, levels=typeOrder)
+ggplot(data = toPlot, aes(y=value, x=variable, fill = IDHstatus)) + 
+  geom_boxplot(position="dodge") + 
+  labs(y=ofInterest, x='brain cell types') +
+  scale_fill_manual(values=c('#11cc42','black')) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  stat_compare_means(aes(group = IDHstatus), label = "p.format", method='wilcox.test')
+res <- toPlot %>% group_by(variable) %>% 
+  do(w = wilcox.test(value~IDHstatus, data=., paired=FALSE)) %>% 
+  summarise(variable, Wilcox = w$p.value)
+res$adj.p <- p.adjust(res$Wilcox, method='BH')
+write.table(res, file=paste0('summary_oldhambraincelltypes_boxplot_stats_',ofInterest, '.txt'), sep='\t', row.names=F)
+# across patient plot for panel A
+cellTypesOfInterest <- toTest # c('oligodendrocytes','astrocytes','endothelial','neuron','lymphocytes')
+ofInterest <- 'median'
+toPlot <- cellTypeSummary[[ofInterest]][,cellTypesOfInterest]
+rownames(toPlot) <- cellTypeSummary[[ofInterest]]$Patient
+toPlot <- t(as.matrix(toPlot[patientOrder[patientOrder %in% rownames(toPlot)],]))
+my_palette <- colorRampPalette(c("white","#8407d9")) #brewer.pal(n = 8, name = "Purples")
+heatmap.2(toPlot, trace="none", Rowv=F, Colv=F, sepcolor='black', col=my_palette, colsep=1:ncol(toPlot), rowsep=1:nrow(toPlot),sepwidth=c(0.01,0.01), margins=c(13,13))
+
+
+# LINEAR MODELS
 ##### ##### #####
 # 1) PURITY
 ###
