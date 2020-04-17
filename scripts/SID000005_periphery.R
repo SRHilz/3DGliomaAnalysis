@@ -43,28 +43,14 @@ definePeriph <- function(tumorModel){
   return(output)
 }
 
-plot3dSamples <- function(sampleModels, colors){
-  for (name in names(sampleModels)){
-    x <- sampleModels[[name]]
+plot3dSamples <- function(sampleCoordinates, colors){
+  for (name in rownames(sampleCoordinates)){
+    sampleColors <- colors[name]
+    x <- sampleCoordinates[name,]
     print(paste0('Processing sample',name))
-    dtemp <- dim(x)
-    sample <- contour3d(x, x=1:dtemp[1], y=1:dtemp[2], z=1:dtemp[3], level = 1, alpha = 1, color=colors, add = TRUE, draw = TRUE)
-    text3d(which(x == 1, arr.ind=TRUE)[1,], texts = name, cex=1, adj=-.3)
+    points3d(x=sampleCoordinates[,1], y=sampleCoordinates[,2], z=sampleCoordinates[,3], level = 1, size = 7, color=sampleColors)
+    text3d(x=sampleCoordinates[,1], y=sampleCoordinates[,2], z=sampleCoordinates[,3], texts = rownames(sampleCoordinates), cex=1, adj=-.3)
   }
-}
-
-calcSampleCenters <- function(sampleModels){
-  sampleCenteredXYZ <- c()
-  for (name in names(sampleModels)){
-    x <- sampleModels[[name]]
-    print(paste0('Processing sample',name))
-    sampleXYZ <- which(x==1, arr.ind=TRUE)
-    sampleCenteredX <- max(sampleXYZ[,1])-((max(sampleXYZ[,1])-min(sampleXYZ[,1]))/2)
-    sampleCenteredY <- max(sampleXYZ[,2])-((max(sampleXYZ[,2])-min(sampleXYZ[,2]))/2)
-    sampleCenteredZ <- max(sampleXYZ[,3])-((max(sampleXYZ[,3])-min(sampleXYZ[,3]))/2)
-    sampleCenteredXYZ <- rbind(sampleCenteredXYZ, c(sampleCenteredX,sampleCenteredY,sampleCenteredZ))
-  }
-  return(sampleCenteredXYZ)
 }
 
 pairwiseDist2pointsXYZ <- function(p1, p2, adj){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
@@ -156,9 +142,9 @@ calcDistancesCentroid <- function(samplePoints, centroid, adj){
 }
 
 # Specify patient and load the config file for that patient. Config file contains paths to imaging files + ordering of samples + sample names + colors
-patientID <- 'Patient276'
-sf <- "sf11054"
-tumorPrefix <- "Recurrence1v"
+patientID <- 'Patient457'
+sf <- "sf11915"
+tumorPrefix <- "Primaryv"
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 modelsPath <- paste0(dataPath, '/3Dmodels/',patientID,'/',sf)
 
@@ -175,7 +161,8 @@ names <- rownames(sampleCenters)
 sampleID_long <- paste0(tumorPrefix,names)
 
 # Set up default colors
-colors <- rep('blue', length(sampleModels))
+colors <- rep('blue', length(names))
+names(colors) <- names
 
 # Read in tumor model for patient
 tumorModel <- readRDS(paste0(modelsPath, '/tumor_t2.rds'))
