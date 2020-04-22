@@ -7,6 +7,7 @@ library(dplyr)
 library(ggpmisc)
 library(stats)
 library(RColorBrewer)
+library(kableExtra)
 
 pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
@@ -86,6 +87,30 @@ merged[which(is.na(merged$purity)),]$purity <- .1
 
 # convert purities >1 to 1
 merged[which(merged$purity >1),]$purity <- 1
+
+# Visualize all IDH-wt tumors
+mergeIDHwtc <- merged[which(merged$molType=='IDH-wt' & !merged$Patient=='P452'),]
+for (p in unique(mergeIDHwtc$Patient)){
+  print(p)
+  print('total samples (might include some not SM')
+  total <- nrow(mergeIDHwtc[which(mergeIDHwtc$Patient == p),])
+  print(total)
+  print('samples with purity < .6 (might include some not SM')
+  belowThresh <- nrow(mergeIDHwtc[which(mergeIDHwtc$Patient == p & mergeIDHwtc$purity < .6),])
+  print(belowThresh)
+  if (belowThresh/total > .5){
+    print('majority')
+  } else {
+    print('minority')
+  }
+}
+
+
+# check numbers below 60% in IDH-wt glioma
+
+aggregate(data=test, by=Patient, FUN=length, subset=purity > .6)
+
+
 
 # set colors (+ molsubtype) for plotting (here focused on subtype differences)
 merged$molType <- 'IDH-mut_A' # Astro
