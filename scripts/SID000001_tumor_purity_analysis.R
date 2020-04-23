@@ -8,6 +8,7 @@ library(ggpmisc)
 library(stats)
 library(RColorBrewer)
 library(kableExtra)
+library(ggpubr)
 
 pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
@@ -105,13 +106,6 @@ for (p in unique(mergeIDHwtc$Patient)){
   }
 }
 
-
-# check numbers below 60% in IDH-wt glioma
-
-aggregate(data=test, by=Patient, FUN=length, subset=purity > .6)
-
-
-
 # set colors (+ molsubtype) for plotting (here focused on subtype differences)
 merged$molType <- 'IDH-mut_A' # Astro
 merged$color <- subtypeColors['IDH-mut_A'] # green from bp Set1
@@ -144,6 +138,7 @@ summary$IDHwtTERT <- FALSE
 summary[which(summary$molType=='IDH-wt'),]$IDHwtTERT <- TRUE
 summary$medians <- aggregate(merged[,'purity'], list(merged$Patient), median)$x
 summary$mad <- aggregate(merged[,'purity'], list(merged$Patient), mad)$x
+summary$sd <- aggregate(merged[,'purity'], list(merged$Patient), sd)$x
 patientOrderCCFmad <- summary[order(summary$mad),]$patientID
 
 # plot medians by mad colored by IDH-wtTPM
@@ -156,11 +151,30 @@ plot(summary$median, summary$mad, col=as.character(summary$color), pch=as.numeri
 
 # plot variance by molType (i.e. subtype)
 summaryNoP452 <- summary[which(!summary$patientID=='P452'),]
-boxplot(summaryNoP452$mad~summaryNoP452$IDHwtTERT, ylab = 'Estimated Purity MAD', las='2', col='grey')
-wilcox.test(summaryNoP452$mad~summaryNoP452$IDHwtTERT)
+boxplot(summaryNoP452$sd~summaryNoP452$IDHwtTERT, ylab = 'Estimated Purity MAD', las='2', col='grey')
+summaryNoP452_Rec <- summaryNoP452[which(summaryNoP452$recurrence==T),]
+summaryNoP452_Primary <- summaryNoP452[which(summaryNoP452$recurrence==F),]
+wilcox.test(summaryNoP452$median~summaryNoP452$IDHwtTERT, alternative='greater')
+wilcox.test(summaryNoP452$mad~summaryNoP452$IDHwtTERT, alternative='less')
+ggplot(data = summaryNoP452, aes(y=medians, x=IDHwtTERT, fill = IDHwtTERT)) + 
+  geom_boxplot(position="dodge") + 
+  labs(y='medians', x='subtype') +
+  scale_fill_manual(values=c('#11cc42','black')) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  stat_compare_means(aes(group = IDHwtTERT), label = "p.format", method='wilcox.test', method.args = list(alternative = "less"))
+ggplot(data = summaryNoP452, aes(y=mad, x=IDHwtTERT, fill = IDHwtTERT)) + 
+  geom_boxplot(position="dodge") + 
+  labs(y='mad', x='subtypes') +
+  scale_fill_manual(values=c('#11cc42','black')) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  stat_compare_means(aes(group = IDHwtTERT), label = "p.format", method='wilcox.test', method.args = list(alternative = "greater"))
+
+# compare variance of medians (is the variance equal?)
+hist(summaryNoP452[which(summaryNoP452$IDHwtTERT==F),]$medians)
+fligner.test(medians ~ IDHwtTERT, data = summaryNoP452)
 
 # plot boxplot ordered by variance in purity
-merged$Patient <- factor(merged$Patient, levels=orderToUse)
+merged$Patient <- factor(merged$Patient, levels=ordrToUse)
 boxplot(merged$purity~merged$Patient, col = 'grey72', ylab = 'Estimated CCF', las='2')
 mergedSM <- merged[which(merged$SampleType == 'SM'),]
 mergednonSM <- merged[which(merged$SampleType == 'non-SM'),]
