@@ -90,14 +90,15 @@ merged[which(is.na(merged$purity)),]$purity <- .1
 merged[which(merged$purity >1),]$purity <- 1
 
 # Visualize all IDH-wt tumors
-mergeIDHwtc <- merged[which(merged$molType=='IDH-wt' & !merged$Patient=='P452'),]
-for (p in unique(mergeIDHwtc$Patient)){
+mergedSM <- merged[which(merged$SampleType=='SM'),]
+mergeSMIDHwtc <- mergedSM[which(mergedSM$molType=='IDH-wt' & !mergedSM$Patient=='P452'),]
+for (p in unique(mergeSMIDHwtc$Patient)){
   print(p)
-  print('total samples (might include some not SM')
-  total <- nrow(mergeIDHwtc[which(mergeIDHwtc$Patient == p),])
+  print('total samples (SM only')
+  total <- nrow(mergeSMIDHwtc[which(mergeSMIDHwtc$Patient == p),])
   print(total)
-  print('samples with purity < .6 (might include some not SM')
-  belowThresh <- nrow(mergeIDHwtc[which(mergeIDHwtc$Patient == p & mergeIDHwtc$purity < .6),])
+  print('samples with purity < .6 (SM only')
+  belowThresh <- nrow(mergeSMIDHwtc[which(mergeSMIDHwtc$Patient == p & mergeSMIDHwtc$purity < .6),])
   print(belowThresh)
   if (belowThresh/total > .5){
     print('majority')
@@ -123,8 +124,9 @@ names(molType) <- unique(merged[,c('Patient','molType')])$Patient
 grade <- unique(merged[,c('Patient','Grade')])$Grade
 names(grade) <- unique(merged[,c('Patient','Grade')])$Patient
 
-# get mean,med, and var by patient
-summary <- aggregate(merged[,'purity'], list(merged$Patient), mean)
+# get mean,med, and var by patient (only for SM samples)
+mergedSM <- merged[which(merged$SampleType=='SM'),]
+summary <- aggregate(mergedSM[,'purity'], list(mergedSM$Patient), mean)
 colnames(summary) <- c("patientID","means")
 summary$molType <- molType[summary$patientID]
 summary$molType <- factor(molType, levels=c("IDH-mut_O","IDH-mut_A","IDH-wt"))
@@ -132,13 +134,12 @@ summary$grade <- grade[summary$patientID]
 summary$grade <- as.factor(summary$grade)
 summary$grade4 <- FALSE
 summary$recurrence <- TRUE
-summary[which(summary$patientID %in% merged[which(merged$Tumor=='Primary'),]$Patient),]$recurrence <- FALSE
+summary[which(summary$patientID %in% mergedSM[which(mergedSM$Tumor=='Primary'),]$Patient),]$recurrence <- FALSE
 summary[which(summary$grade == 4),]$grade4 <- TRUE
 summary$IDHwtTERT <- FALSE
 summary[which(summary$molType=='IDH-wt'),]$IDHwtTERT <- TRUE
-summary$medians <- aggregate(merged[,'purity'], list(merged$Patient), median)$x
-summary$mad <- aggregate(merged[,'purity'], list(merged$Patient), mad)$x
-summary$sd <- aggregate(merged[,'purity'], list(merged$Patient), sd)$x
+summary$medians <- aggregate(mergedSM[,'purity'], list(mergedSM$Patient), median)$x
+summary$mad <- aggregate(mergedSM[,'purity'], list(mergedSM$Patient), mad)$x
 patientOrderCCFmad <- summary[order(summary$mad),]$patientID
 
 # plot medians by mad colored by IDH-wtTPM
@@ -151,7 +152,6 @@ plot(summary$median, summary$mad, col=as.character(summary$color), pch=as.numeri
 
 # plot variance by molType (i.e. subtype)
 summaryNoP452 <- summary[which(!summary$patientID=='P452'),]
-boxplot(summaryNoP452$sd~summaryNoP452$IDHwtTERT, ylab = 'Estimated Purity MAD', las='2', col='grey')
 summaryNoP452_Rec <- summaryNoP452[which(summaryNoP452$recurrence==T),]
 summaryNoP452_Primary <- summaryNoP452[which(summaryNoP452$recurrence==F),]
 wilcox.test(summaryNoP452$median~summaryNoP452$IDHwtTERT, alternative='greater')
@@ -174,13 +174,10 @@ hist(summaryNoP452[which(summaryNoP452$IDHwtTERT==F),]$medians)
 fligner.test(medians ~ IDHwtTERT, data = summaryNoP452)
 
 # plot boxplot ordered by variance in purity
-merged$Patient <- factor(merged$Patient, levels=ordrToUse)
-boxplot(merged$purity~merged$Patient, col = 'grey72', ylab = 'Estimated CCF', las='2')
-mergedSM <- merged[which(merged$SampleType == 'SM'),]
-mergednonSM <- merged[which(merged$SampleType == 'non-SM'),]
+mergedSM <- merged[which(merged$SampleType=='SM'),]
+mergedSM$Patient <- factor(mergedSM$Patient, levels=orderToUse)
+boxplot(mergedSM$purity~mergedSM$Patient, col = 'white', ylab = 'Estimated CCF', las='2', outline = FALSE, boxlty = 0)
 stripchart(mergedSM$purity~mergedSM$Patient, vertical = TRUE, #separated out sm and non sm as gives control to color them separately
-           method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5)
-stripchart(mergednonSM$purity~mergednonSM$Patient, vertical = TRUE, 
            method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5)
 
 # set patient level order (Oligo, Astro, GBM, with Primaries always before Recurrences)
