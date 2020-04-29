@@ -325,6 +325,7 @@ library(lmerTest)
 library(pheatmap)
 library(stats)
 library(RColorBrewer)
+library(tidyr)
 
 # read in config file info
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
@@ -344,7 +345,7 @@ data <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
 # remove samples without exome data
 data <- data[which(!is.na(data$WES_ID)),]
 # remove samples that do not have distance from periphery/centroid metrics
-data <- data[which(!is.na(data$DistPeriph)),]
+#data <- data[which(!is.na(data$DistPeriph)),]
 # read in patient + tumor data file
 subtypedata <- read.table(patientTumorDataFile, sep='\t', header = T)
 # merge by patient ID
@@ -386,6 +387,22 @@ mtmp <- transform(merge(dataCancerSEA,dataOldhamDecon,by=0), row.names=Row.names
 # add in metadata
 mtmp <- transform(merge(mtmp, merged, by=0), row.names=Row.names, Row.names=NULL)
 
+## GENERAL TRENDS PLOTTING ACROSS SAMPLES (to get P302, need to comment out the data <- data[which(!is.na(data$DistPeriph)),] above)
+##### ##### #####
+# plot boxplot ordered by variance in purity
+toTest <- as.vector(dataTypes['OldhamDecon'] %>% unlist)
+toPlot <- mtmp[,c(toTest, 'Patient')]
+toPlotLong <- gather(toPlot, CellType, Value, lymphocytes:neuron, factor_key=TRUE)
+toPlotLong$Patient <- factor(toPlotLong$Patient, levels=patientOrder)
+par(mfrow=c(10,1), mar=c(4,2,1,1))
+for (c in unique(toPlotLong$CellType)){
+  print(c)
+  toPlotLongCellType <- toPlotLong[which(toPlotLong$CellType==c),]
+  boxplot(toPlotLongCellType$Value~toPlotLongCellType$Patient, col = 'white', main=c, las='2', boxlty = 0)
+  stripchart(toPlotLongCellType$Value~toPlotLongCellType$Patient, vertical = TRUE, #separated out sm and non sm as gives control to color them separately
+             method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5)
+}
+
 # apply conversions (transform purity and distance from periphery/centroid into z scores)
 mtmp$zDistCentroid <- computeZscore(mtmp$DistCentroid) 
 mtmp$zWithinDistCentroid <- NA #same as above but within a patient
@@ -409,9 +426,6 @@ dataTypes[['zPurity']] <- 'zPurity'
 mtmp$Patient <- as.factor(mtmp$Patient)
 mtmp <- mtmp[which(!mtmp$Patient == 'P452'),] 
 
-# for purity, fits a linear model to see its relationship to each cell type/state signature and corrects group for mult testing
-#  that controls for repeat measures 
-# running note - for some reason need to manually specify dataMatrix <- mtmp, or won't run.
 
 # MEDIANS AND VARIANCE (MAD)
 ##### ##### #####
@@ -466,6 +480,9 @@ heatmap.2(toPlot, trace="none", Rowv=F, Colv=F, sepcolor='black', col=my_palette
 
 # LINEAR MODELS
 ##### ##### #####
+# for purity, fits a linear model to see its relationship to each cell type/state signature and corrects group for mult testing
+#  that controls for repeat measures 
+# running note - for some reason need to manually specify dataMatrix <- mtmp, or won't run.
 # 1) PURITY
 ###
 # a) total SNVS
