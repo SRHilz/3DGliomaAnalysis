@@ -6,6 +6,7 @@ library(reshape2)
 library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
+library(ggpubr)
 
 # define file paths
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
@@ -181,4 +182,28 @@ for (p in unique(toPlot$cellType)){
   print(scoreMedial)
   print(ks.test(scoreLateral, scoreMedial))
 }
+
+## Pathology analysis
+file <- '/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Projects/2018_Patient260_Case_Study/Data/Pathology_CollectionSpreadsheet.txt'
+data <- read.table(file, sep='\t', header = T, stringsAsFactors = F)
+data$lesion <- c(rep('lateral',10),rep('medial',10))
+data$lesion <- as.factor(data$lesion)
+dataTumor <- data[which(data$`Target...tumor.nuclei` > 0),]
+par(mfrow=c(1,2))
+dotchart(dataTumor[seq(18,1,-1),]$Target.BV.hyperplasia, dataTumor[seq(18,1,-1),]$Color, col=c(rep('red',8),rep('blue',10)), ylab="BV Hyperplasia")
+boxplot(dataTumor$Target.Ki67.BTRC.Count~dataTumor$lesion, col=c('blue','red'), ylab="Ki67")
+t.test(dataTumor[which(dataTumor$lesion=='lateral'),]$Target.Ki67.BTRC.Count,dataTumor[which(dataTumor$lesion=='medial'),]$Target.Ki67.BTRC.Count, alternative="less")
+ggplot(data, aes(x=aspect, y=CD163, fill=aspect)) + 
+  geom_boxplot(fill="white")+
+  geom_dotplot(binaxis='y', stackdir='center')+
+  scale_fill_manual(values=c("blue", "red"))+
+  theme(axis.text.x = element_text(size=12), axis.title = element_text(size = 12), axis.text.y = element_text(size=12), panel.background = element_rect(fill = 'white', colour = 'black'), legend.background=element_blank())+
+  stat_compare_means(aes(group = aspect), label = "p.format", method='wilcox.test', method.args = list(alternative = "greater"))
+ggplot(data, aes(x=aspect, y=ps6, fill=aspect)) + 
+  geom_boxplot(fill="white")+
+  geom_dotplot(binaxis='y', stackdir='center')+
+  scale_fill_manual(values=c("blue", "red"))+
+  theme(axis.text.x = element_text(size=12), axis.title = element_text(size = 12), axis.text.y = element_text(size=12), panel.background = element_rect(fill = 'white', colour = 'black'), legend.background=element_blank())+
+  stat_compare_means(aes(group = aspect), label = "p.format", method='wilcox.test', method.args = list(alternative = "greater"))
+
 
