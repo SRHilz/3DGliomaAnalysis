@@ -202,10 +202,30 @@ purityCutoff <- 0.7
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 # data file paths
+mutationSigPath <- paste0(dataPath, 'Patient452_weights.txt') #not related to SciClone, but for this patient - the mutation signatures from Alexandrov et al. 2020
 sciCloneClusterFile <- paste0(outputPath,'SID000015_runSciClone/P452.cluster.summary.tsv.means.txt')
 sciCloneGenesClustersFile <- paste0(outputPath,'SID000015_runSciClone/P452.cluster.tsv')
 outfolder <- 'SID000016_P452_sciclone_analysis/'
 cancerCensusGenesPath <- paste0(dataPath,'cancer_gene_census.csv')
+
+# quick plot of Alexandrov mutation signatures for this patient
+ofInterest <- c('Signature.1A','Signature.3','Signature.4', 'Signature.11')
+mutSigData <- read.csv(mutationSigPath, sep='\t')
+mutSigData$sample <- gsub('Primary.','',mutSigData$sample)
+mutSigData$sample <- factor(mutSigData$sample, levels=mixedsort(mutSigData$sample))
+toPlot <- mutSigData[,ofInterest]
+rownames(toPlot) <- as.character(mutSigData$sample)
+toPlot <- toPlot[levels(mutSigData$sample),]
+break1 <- .25
+break2 <- .75
+min <- min(toPlot, na.rm=T)
+max <- max(toPlot, na.rm=T)
+my_palette <- colorRampPalette(c("black", "grey", "white"))(n = 299)
+col_breaks = c(seq(min,break1,length=100), # for yellow (~1st quartile)
+               seq(break1-(break1/1000),break2-(break2/1000),length=100), # for black (~within 2nd and 3rd quartiles)
+               seq(break2,max,length=100)) # for blue (~4th quartile)
+hm.parameters <- list(toPlot,cellwidth=10, cellheight=10, fontsize=10, border_col=NA, cluster_rows = F, cluster_cols = F, col= my_palette, breaks = col_breaks, na_col='white')
+do.call("pheatmap", hm.parameters)
 
 # read in cluster mean data
 sciClone <- read.table(sciCloneClusterFile,sep='\t', header=T, stringsAsFactors = F, row.names=1)
