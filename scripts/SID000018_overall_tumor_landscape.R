@@ -387,6 +387,9 @@ mtmp <- transform(merge(dataCancerSEA,dataOldhamDecon,by=0), row.names=Row.names
 # add in metadata
 mtmp <- transform(merge(mtmp, merged, by=0), row.names=Row.names, Row.names=NULL)
 
+# save as table that will be in supplement
+write.table(mtmp[,c('Patient','SampleName',dataTypes[['OldhamDecon']], dataTypes[['CancerSEA']])], file=paste0(outFolder,'SID000018_merged_cell_types_cancer_processes_values.txt'), sep='\t', quote=F)
+
 ## GENERAL TRENDS PLOTTING ACROSS SAMPLES (to get P302, need to comment out the data <- data[which(!is.na(data$DistPeriph)),] above)
 ##### ##### #####
 # plot boxplot ordered by variance in purity
