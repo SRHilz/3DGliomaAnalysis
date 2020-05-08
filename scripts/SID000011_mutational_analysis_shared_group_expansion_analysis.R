@@ -421,7 +421,7 @@ toPlotFinal$patientCluster <- paste0(gsub("Patient",'P',toPlotFinal$patient),'-'
 order <- unique(toPlotFinal$patientCluster)
 toPlotFinal$patientCluster <- factor(toPlotFinal$patientCluster, levels=order)
 toPlotFinal$type <- 'Other'
-toPlotFinal[which(toPlotFinal$patient %in% PrimaryGBMs),]$type <- 'PrimaryGBM'
+toPlotFinal[which(toPlotFinal$patient %in% IDHwtTERTp),]$type <- 'IDHwtTERTp'
 # plot by difference 
 toPlotFinal$difference <- toPlotFinal$meanDistanceWithin-toPlotFinal$meanDistanceRandom
 ggplot(data = toPlotFinal, aes(x=patientCluster, y=difference, group=threshold))+
@@ -458,5 +458,61 @@ ks.test(proportionsToPlotNoP452[which(proportionsToPlotNoP452$subtype=='GBMTERT'
 boxplot(proportionsToPlotNoP452$proportion~proportionsToPlotNoP452$subtype)
 ks.test(proportionsToPlot[which(proportionsToPlot$ordinaltype=='Primary'),]$proportion,proportionsToPlot[which(proportionsToPlot$ordinaltype=='Recurrent'),]$proportion)
 boxplot(proportionsToPlot$proportion~proportionsToPlot$ordinaltype)
+
+# PART 3 - creates master file of mean VAF of each expansion
+finalClusters <- as.character(unique(toPlotFinal$patientCluster)) # these are from PART#2 above
+# read in sample data file
+data <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
+# create empty final output structure
+clusterMeansOut <- data.frame(patient=character(), cluster=character(), sample=character(), meanVAF=numeric())
+for (patientID in unique(toPlotFinal$patient)){
+  
+  p <- gsub('Patient','P',patientID)
+  
+  # subset metadata dataframe for patient
+  patientData <- data[which(data$Patient == p),]
+  
+  # specify which samples to use (those that are SM)
+  patientSamples <- data[which(data$Patient == p & data$SampleType=='SM'),]$sample_type
+  
+  # specify mutfile to use
+  avfFile <- paste0(dataPath,patientID,'.R.mutations.avf.txt')
+  
+  # run muts.bin function, which creates the same logical matrix used for phylo trees
+  muts.bin <- getMutsBin(avfFile) #muts.bin for all samples in the patient, not yet subsetted
+  
+  # make the column names so they can string match our sample names
+  colnames(muts.bin) <- gsub('[.]','-',colnames(muts.bin))
+  colnames(muts.bin) <- gsub('_called','',colnames(muts.bin))
+  
+  # get mut info
+  info <- getInfo(avfFile, colnames(muts.bin))
+  
+  # create matrix of vafs
+  vafs <- acast(info, uniqueID~sampleID, value.var="vaf")
+  colnames(vafs) <- gsub('[.]','-',colnames(vafs))
+  vafs <- vafs[,patientSamples]
+  
+  # convert sample names to be cross-patient compatible
+  colnames(vafs) <- paste0(p,data[match(patientSamples, patientData$sample_type),]$SampleName)
+  
+  # get cluster info
+  cluster <- read.table(paste0(outputPath, outfolder, patientID, '_clusters_post_filtering.txt'), sep='\t', header=F)
+  
+  # id kept clusters in final analysis
+  finalClustersPatient <- gsub(paste0(p,'-'), '', finalClusters[grepl(p,finalClusters)])
+  
+  # subset by these
+  clusterToIter <- cluster[which(cluster$V2 %in% finalClustersPatient),]
+  
+  # calculate mean vaf for each cluster
+  for (c in unique(clusterToIter$V2)){
+    print(c)
+    snvs <- as.character(clusterToIter[clusterToIter$V2==c,]$V1)
+    clusterMeans <- colMeans(vafs[snvs,])
+    clusterMeansOut <- rbind(clusterMeansOut, data.frame(cbind(patient=p, cluster=c, sample=names(clusterMeans), meanVAF=clusterMeans)))
+  }
+}
+write.table(clusterMeansOut, file=paste0(outputPath, outfolder, 'clusters_all_patients_post_filtering_meanVAF.txt'), quote=F, row.names=F, sep='\t')
 
 
