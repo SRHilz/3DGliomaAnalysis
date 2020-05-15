@@ -157,15 +157,17 @@ summaryNoP452_Primary <- summaryNoP452[which(summaryNoP452$recurrence==F),]
 wilcox.test(summaryNoP452$median~summaryNoP452$IDHwtTERT, alternative='greater')
 wilcox.test(summaryNoP452$mad~summaryNoP452$IDHwtTERT, alternative='less')
 ggplot(data = summaryNoP452, aes(y=medians, x=IDHwtTERT, fill = IDHwtTERT)) + 
-  geom_boxplot(position="dodge") + 
+  geom_boxplot(position="dodge", outlier.shape = NA) + 
+  geom_jitter(shape=16, position=position_jitter(0.2)) +
   labs(y='medians', x='subtype') +
-  scale_fill_manual(values=c('#11cc42','black')) +
+  scale_fill_manual(values=c('white','#11cc42')) +
   theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
   stat_compare_means(aes(group = IDHwtTERT), label = "p.format", method='wilcox.test', method.args = list(alternative = "less"))
 ggplot(data = summaryNoP452, aes(y=mad, x=IDHwtTERT, fill = IDHwtTERT)) + 
-  geom_boxplot(position="dodge") + 
+  geom_boxplot(position="dodge", outlier.shape = NA) + 
+  geom_jitter(shape=16, position=position_jitter(0.2)) +
   labs(y='mad', x='subtypes') +
-  scale_fill_manual(values=c('#11cc42','black')) +
+  scale_fill_manual(values=c('white','#11cc42')) +
   theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
   stat_compare_means(aes(group = IDHwtTERT), label = "p.format", method='wilcox.test', method.args = list(alternative = "greater"))
 
