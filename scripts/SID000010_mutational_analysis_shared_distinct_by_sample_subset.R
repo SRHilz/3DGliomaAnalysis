@@ -211,9 +211,19 @@ patientMedians$tumorSubtype <- 'IDH-wt'
 patientMedians[as.character(patientMedians$patient) %in% gsub('P','Patient',as.character(subtypedata[subtypedata$IDH_Mut == 1,]$Patient)),]$tumorSubtype <- 'IDH-mut'
 wilcox.test(patientMedians$normedDifference_medians~patientMedians$tumorType)
 wilcox.test(patientMedians$normedDifference_var~patientMedians$tumorType)
-boxplot(patientMedians$normedDifference_medians~patientMedians$tumorType, col='grey', ylab='Median normalized genetic difference')
+ggplot(data = patientMedians, aes(y=normedDifference_medians, x=tumorType)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA, fill='grey') + 
+  geom_jitter(shape=16, size=3,position=position_jitter(0.2)) +
+  labs(y='Median normalized genetic difference') +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  stat_compare_means(aes(group = tumorType), label = "p.format", method='wilcox.test')
 wilcox.test(patientMedians$normedDifference_medians~patientMedians$tumorSubtype)
-boxplot(patientMedians$normedDifference_medians~patientMedians$tumorSubtype, col='grey', ylab='Median normalized genetic difference')
+ggplot(data = patientMedians, aes(y=normedDifference_medians, x=tumorSubtype)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA, fill='grey') + 
+  geom_jitter(shape=16, size=3,position=position_jitter(0.2)) +
+  labs(y='Median normalized genetic difference') +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  stat_compare_means(aes(group = tumorSubtype), label = "p.format", method='wilcox.test')
 
 ## Do multiple regression on distance vs snvs
 fit <- lm(snvs_different ~ spatial_distance + patient, data=callsPerSampleSubset)
