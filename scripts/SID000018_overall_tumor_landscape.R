@@ -456,14 +456,15 @@ for (i in seq_along(toTest)){
 }
 # plot
 typeOrder <- c('microgliamacro','m1macro','ependymal','astrocytes','lymphocytes','endothelial','granulocyte','oligodendrocytes','astrocytes2','neuron')
-ofInterest <- 'median'
+ofInterest <- 'mad'
 toPlot <- melt(cellTypeSummary[[ofInterest]], id.vars=c('Patient','IDHstatus'))
 toPlot$IDHstatus <- factor(toPlot$IDHstatus, levels=c(1,0))
 toPlot$variable <- factor(toPlot$variable, levels=typeOrder)
 ggplot(data = toPlot, aes(y=value, x=variable, fill = IDHstatus)) + 
-  geom_boxplot(position="dodge") + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_point(position=position_jitterdodge()) +
   labs(y=ofInterest, x='brain cell types') +
-  scale_fill_manual(values=c('#11cc42','black')) +
+  scale_fill_manual(values=c('white', '#11cc42')) +
   theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
   stat_compare_means(aes(group = IDHstatus), label = "p.format", method='wilcox.test')
 res <- toPlot %>% group_by(variable) %>% 
