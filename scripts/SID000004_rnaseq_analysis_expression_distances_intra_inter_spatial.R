@@ -177,7 +177,8 @@ toAnalyzeMeansWithinSubtype <- toAnalyzeMeans[which(toAnalyzeMeans$subtypeRelati
 patientsToDrop <- c('P452') #we drop our unique non-cannonical GBM from this analysis
 toAnalyzeMeansWithinSubtype <- toAnalyzeMeansWithinSubtype[which(!(toAnalyzeMeansWithinSubtype$Patient1 %in% patientsToDrop | toAnalyzeMeansWithinSubtype$Patient2 %in% patientsToDrop)),]
 ggplot(toAnalyzeMeansWithinSubtype, aes(x=IDH_Mut1, y=dissimilarityMean, fill=patientRelationship)) +
-  geom_boxplot(position=position_dodge(0.8)) +
+  geom_boxplot(position=position_dodge(0.8), outlier.shape=NA) +
+  geom_point(position=position_jitterdodge()) +
   scale_fill_manual(values=c("gray28","gray72"))+
   labs(list(y = "Mean dissimilarity") )+
   theme(axis.text.x = element_text(size=20, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 20), axis.text.y = element_text(size=20, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
