@@ -226,7 +226,7 @@ for (patientID in patientsToUse){
 }
 
 # save data into a supplemental table
-write.table(mutTotalPerSampleSubset, file=paste0(outputPath, outfolder, "SID000006_TableS_mutational_analysis_total_by_patient_by_sample_number.txt"), quote=F, row.names=F)
+#write.table(mutTotalPerSampleSubset, file=paste0(outputPath, outfolder, "SID000006_TableS_mutational_analysis_total_by_patient_by_sample_number.txt"), quote=F, row.names=F)
 
 # whip data into the proper types so that we can both do some math on it and plot it
 mutTotalPerSampleSubset$mutsTotal <- as.numeric(mutTotalPerSampleSubset$mutsTotal)
@@ -283,7 +283,7 @@ for (n in unique(dataText$n)){
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
 dataText$label <- paste0('p=',dataText$adj.p,', R=',dataText$R)
-write.table(dataText, file=paste0(outputPath,outfolder,'SID000006_mutsSubclonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
+#write.table(dataText, file=paste0(outputPath,outfolder,'SID000006_mutsSubclonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
 # plot
 ggplot(mutTotalPerSampleSubsetUsableN, aes(x=meanDistance, y=mutsSubclonal, color=patientID)) +
   geom_point() +
@@ -445,7 +445,7 @@ for (n in unique(dataText$n)){
   dataText[dataTextNSubset.index,]$adj.p <- p.adjust(dataText[dataTextNSubset.index,]$p, method = "BH", n = length(dataText[dataTextNSubset.index,]$p))
 }
 dataText$label <- paste0('p=',dataText$adj.p,', R=',dataText$R)
-write.table(dataText, file=paste0(outputPath,outfolder,tag,'_mutsClonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
+#write.table(dataText, file=paste0(outputPath,outfolder,tag,'_mutsClonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
 # plot
@@ -476,8 +476,9 @@ mutClonalMeanPerPatientPerNDiffCalc$type <- 'newly-diagnosed'
 mutClonalMeanPerPatientPerNDiffCalc[which(mutClonalMeanPerPatientPerNDiffCalc$patientID %in% recSamples),]$type <- 'recurrent'
 mutClonalMeanPerPatientPerNDiffCalc$type <- factor(mutClonalMeanPerPatientPerNDiffCalc$type, levels=c("newly-diagnosed","recurrent"))
 toPlot <- mutClonalMeanPerPatientPerNDiffCalc[which(mutClonalMeanPerPatientPerNDiffCalc$n %in% 1:6),]
-ggplot(toPlot, aes(x=n, y=diffPercent)) +
-  geom_boxplot(position=position_dodge()) +
+ggplot(toPlot, aes(x=n, y=diff)) +
+  geom_boxplot(position=position_dodge(), outlier.shape=NA) +
+  geom_jitter(shape=16, position=position_jitter(0.2)) +
   theme(axis.text.x = element_text(size=20), axis.title = element_text(size = 20), axis.text.y = element_text(size=20), panel.background = element_rect(fill = 'white', colour = 'black'), legend.key=element_blank(), legend.text=element_text(size=15), legend.title=element_text(size=15))
 aggregate(mutClonalMeanPerPatientPerNDiffCalc, by=list(n=mutClonalMeanPerPatientPerNDiffCalc$n), mean)
 
