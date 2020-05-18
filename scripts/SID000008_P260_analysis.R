@@ -7,18 +7,24 @@ library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
 library(ggpubr)
+library(tidyr)
 
-# define file paths
-source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
-path <- '/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Projects/2016_LoglioExomeAnalysis/Data/'
-cnFile <- paste0(dataPath, 'Patient260.GeneCopyNumber.rds')
-cpmFile <- paste0(dataPath, 'SID000003_20190529_first_submission.symbol.coding.CPMs.csv')
-ssgseaInput <-  paste0(dataPath,'Patient260_ssGSEA_results.txt')
-ciberSortFile <- paste0(dataPath, '20190529_first_submission.symbol.coding.CPMs.CIBERSORT.Output_Job8.txt')
-mutfile <- paste0(dataPath, 'Patient260.R.mutations.avf.txt')
+# user-specified variables
+purityCutoff <- 0.7
+lateral_samples <- paste0('v',seq(1,10,1))
+medial_samples <- paste0('v',seq(11,20,1))
 PDGFRA_lateral_id <- 'PDGFRA_chr4_55133815_C_A'
 PDGFRA_medial_id <- 'PDGFRA_chr4_55138638_G_T'
 IDH_id <- 'IDH1_chr2_209113112_C_T'
+
+# define file paths
+source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
+cnFile <- paste0(dataPath, 'Patient260.GeneCopyNumber.rds')
+cpmFile <- paste0(dataPath, 'SID000003_20190913_expanded_gbm.symbol.coding.CPMs.csv')
+ssgseaInput <-  paste0(dataPath,'Patient260_ssGSEA_results.txt')
+ciberSortFile <- paste0(dataPath, '20190529_first_submission.symbol.coding.CPMs.CIBERSORT.Output_Job8.txt')
+mutfile <- paste0(dataPath, 'Patient260.R.mutations.avf.txt')
+
   
 # read in mutfile and get relevant vafs
 muts <- read.delim(mutfile, as.is=TRUE)
@@ -39,15 +45,19 @@ colnames(ref_counts) <- gsub('Recurrence1-','',colnames(ref_counts))
 vafs <- alt_counts/(alt_counts+ref_counts)
 
 # define sample categories and genes of interest
-lateral_high_purity <- c('v1','v2','v3','v4','v5','v6','v7','v8','v9','v10')
-medial_high_purity <- c('v12','v13','v14','v18','v19')
-medail_low_purity <- c('v11','v15','v16','v17','v20')
-samplesToPlot <- c(lateral_high_purity,medial_high_purity)
 
 # read in different data types
 cpms <- read.csv(cpmFile, row.names=1)
 cn <- readRDS(cnFile)
 data <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
+
+# define purity and sample categories of interest
+data$purity <- data$FACETS
+dataPurity <- data[which(data$Patient=="P260"),c('SampleName','purity')]
+lateral_high_purity <- dataPurity[which(dataPurity$purity >= purityCutoff & dataPurity$SampleName %in% lateral_samples),]$SampleName
+medial_high_purity <- dataPurity[which(dataPurity$purity >= purityCutoff & dataPurity$SampleName %in% medial_samples),]$SampleName
+medail_low_purity <- dataPurity[which(dataPurity$purity < purityCutoff & dataPurity$SampleName %in% medial_samples),]$SampleName
+samplesToPlot <- c(lateral_high_purity,medial_high_purity)
 
 # take log of cpms
 logcpms <- log(cpms+.001, 2)
@@ -71,7 +81,16 @@ axis(1,at=seq(colnames(vafs[,samplesToPlot])), labels=colnames(vafs[,samplesToPl
 
 # pdgfra boxplot
 par(mfrow=c(1,1))
-boxplot(PDGFRAcpms[paste0('P260',lateral_high_purity)],PDGFRAcpms[paste0('P260',medial_high_purity)], col=c('blue','red'))
+toPlot <- data.frame(PDGFRAcpms[paste0('P260',lateral_high_purity)],'lateral')
+colnames(toPlot) <- c('PDGFRA_cpms','aspect')
+toBind <- data.frame(PDGFRAcpms[paste0('P260',medial_high_purity)],'medial')
+colnames(toBind) <- c('PDGFRA_cpms','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=PDGFRA_cpms, x=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_jitter(shape=16, size=3, position=position_jitter(0.2)) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
+  stat_compare_means(aes(group = PDGFRA_cpms), label = "p.format", method='wilcox.test')
 wilcox.test(PDGFRAcpms[paste0('P260',lateral_high_purity)],PDGFRAcpms[paste0('P260',medial_high_purity)])
 
 # make PDGFA and C plot
@@ -86,11 +105,19 @@ lines(PDGFCcpms, col = 'black', lty=5)
 axis(1,at=seq(colnames(vafs[,samplesToPlot])), labels=colnames(vafs[,samplesToPlot]), cex=.9, las=2)
 legend('topleft',c('PDGFA','PDGFC'), col=c('black','black'),lty=c(3,5))
 
-# pull out purity info for P260
-data$purity <- 2*data$IDH1_VAF
-dataPurity <- data[which(data$Patient=="P260"),c('SampleName','purity')]
-purity <- dataPurity[which(dataPurity$SampleName %in% lateral_high_purity | dataPurity$SampleName %in% medial_high_purity),]$purity
-names(purity) <- c(lateral_high_purity, medial_high_purity)
+# purity boxplot
+par(mfrow=c(1,1))
+toPlot <- data.frame(dataPurity[which(dataPurity$SampleName %in% lateral_samples),]$purity,'lateral')
+colnames(toPlot) <- c('purity','aspect')
+toBind <- data.frame(dataPurity[which(dataPurity$SampleName %in% medial_samples),]$purity,'medial')
+colnames(toBind) <- c('purity','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=purity, x=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_jitter(shape=16, size=3, position=position_jitter(0.2)) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+wilcox.test(toPlot$purity~toPlot$aspect)
+
 
 # create PTEN cpm and cn line plot
 dev.off()
@@ -106,11 +133,36 @@ plot(PTENcpm, col='white', xaxt='n')
 lines(PTENcpm, col = 'black')
 axis(1,at=seq(names(PTENcpm)), labels=names(PTENcpm), cex=.9, las=2)
 
-# create PTEN boxplot
+# create PTEN CN boxplot
 par(mfrow=c(1,1))
-boxplot(PTENcn[lateral_high_purity],PTENcn[medial_high_purity], col=c('blue','red'))
-boxplot(PTENcpm[lateral_high_purity],PTENcpm[medial_high_purity], col=c('blue','red'))
-wilcox.test(PTENcpm[lateral_high_purity],PTENcpm[medial_high_purity])
+# purity boxplot
+par(mfrow=c(1,1))
+toPlot <- data.frame(PTENcn[lateral_high_purity],'lateral')
+colnames(toPlot) <- c('PTENcn','aspect')
+toBind <- data.frame(PTENcn[medial_high_purity],'medial')
+colnames(toBind) <- c('PTENcn','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=PTENcn, x=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_jitter(shape=16, size=3, position=position_jitter(0.2)) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+wilcox.test(toPlot$PTENcn~toPlot$aspect)
+
+
+# create PTEN CPM boxplot
+par(mfrow=c(1,1))
+# purity boxplot
+par(mfrow=c(1,1))
+toPlot <- data.frame(PTENcpm[lateral_high_purity],'lateral')
+colnames(toPlot) <- c('PTENcpm','aspect')
+toBind <- data.frame(PTENcpm[medial_high_purity],'medial')
+colnames(toBind) <- c('PTENcpm','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=PTENcpm, x=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_jitter(shape=16, size=3, position=position_jitter(0.2)) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+wilcox.test(toPlot$PTENcpm~toPlot$aspect)
 
 # create ssgsea pathway plot for MTOR and ERK
 ssgsea <- read.table(ssgseaInput, row.names=1, header=T, sep='\t')
@@ -121,7 +173,7 @@ ssgsea <- ssgsea[samplesToPlot,]
 toPlot <- ssgsea[,colnames(ssgsea) %in% ofInterest]
 colnames(toPlot)[which(colnames(toPlot)=='REACTOME_MTORC1_MEDIATED_SIGNALLING')] <- 'MTOR Sig.'
 colnames(toPlot)[which(colnames(toPlot)=='REACTOME_PROLONGED_ERK_ACTIVATION_EVENTS')] <- 'ERK Actv.'
-heatmap.2(t(toPlot), trace="none", Colv=F, col=brewer.pal(9,"YlGn"), cexRow=.5)
+#heatmap.2(t(toPlot), trace="none", Colv=F, col=brewer.pal(9,"YlGn"), cexRow=.5)
 toPlotGG <- toPlot
 toPlotGG$sample <- rownames(toPlotGG)
 toPlotGG$aspect <- 'lateral'
@@ -129,10 +181,12 @@ toPlotGG[which(toPlotGG$sample %in% medial_high_purity),]$aspect <- 'medial'
 toPlotGG <- melt(toPlotGG)
 colnames(toPlotGG) <- c('sample','aspect','pathway','score')
 ggplot(toPlotGG, aes(x=pathway, y=score, fill=aspect)) +
-  geom_boxplot(position=position_dodge(0.8)) +
+  geom_boxplot(position=position_dodge(0.8), outlier.shape=NA) +
+  geom_point(position=position_jitterdodge()) +
   scale_fill_manual(values=c("blue","red"))+
   labs(list(y = "Enrichment score") )+
   theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
+testResults <- data.frame(pathway=character(), pvalue=numeric())
 for (p in unique(toPlotGG$pathway)){
   print(paste0('test for lateral vs medial for pathway: ' , p))
   toPlotGGPathway <- toPlotGG[which(toPlotGG$pathway == p),]
@@ -141,13 +195,18 @@ for (p in unique(toPlotGG$pathway)){
   scoreMedial <- toPlotGGPathway[which(toPlotGGPathway$aspect == 'medial'),]$score
   print(scoreMedial)
   if (p == 'MTOR Sig.'){
-    print(ks.test(scoreMedial, scoreLateral, alternative = 'less'))
+    result <- ks.test(scoreMedial, scoreLateral, alternative = 'less')
+    print(result)
+    pvalue <- result$p.value
   } else {
-    print(ks.test(scoreLateral, scoreMedial, alternative = 'less'))
+    result <- ks.test(scoreMedial, scoreLateral, alternative = 'greater')
+    print(result)
+    pvalue <- result$p.value
   }
+  testResults <- rbind(testResults, data.frame(p, pvalue))
 }
 
-# create immune cell plot for immune cell enrichment differences
+# create immune cell plot for immune cell enrichment differences (uses all sampels for which we have RNAseq for)
 ## Read in Cibersort results  
 cibersortResults <- read.table(ciberSortFile, sep='\t', header=T)
 ## Add in patient tags
@@ -167,12 +226,14 @@ cibersortResults260 <- cibersortResults260[,ofInterest]
 toPlot <- melt(cibersortResults260, id.vars='Input.Sample')
 colnames(toPlot) <- c('sample','cellType','score')
 toPlot$aspect <- 'lateral'
-toPlot[which(toPlot$sample %in% medial_high_purity),]$aspect <- 'medial'
+toPlot[which(toPlot$sample %in% medial_samples),]$aspect <- 'medial'
 ggplot(toPlot, aes(x=cellType, y=score, fill=aspect)) +
-  geom_boxplot(position=position_dodge(0.5), width=0.5) +
+  geom_boxplot(position=position_dodge(0.5), width=0.5, outlier.shape=NA) +
+  geom_point(position=position_jitterdodge()) +
   scale_fill_manual(values=c("blue","red"))+
   labs(list(y = "Enrichment score") )+
   theme(axis.text.x = element_text(size=10, color="black",angle = 90, hjust = 1),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
+testResults <- data.frame(pathway=character(), pvalue=numeric())
 for (p in unique(toPlot$cellType)){
   print(paste0('test for lateral vs medial for pathway: ' , p))
   toPlotCellType <- toPlot[which(toPlot$cellType == p),]
@@ -180,24 +241,58 @@ for (p in unique(toPlot$cellType)){
   print(scoreLateral)
   scoreMedial <- toPlotCellType[which(toPlotCellType$aspect == 'medial'),]$score
   print(scoreMedial)
-  print(ks.test(scoreLateral, scoreMedial))
+  result <- ks.test(scoreMedial, scoreLateral)
+  pvalue <- result$p.value
+  testResults <- rbind(testResults, data.frame(p, pvalue))
 }
 
-## Pathology analysis
+testResults$adj.pvalue <- p.adjust(testResults$pvalue, method='BH')
+
+## Pathology analysis - conducted on samples adjacent to those we sequenced; used pathologist-determined % tumor nuclei for "purity" for these 
 file <- '/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Projects/2018_Patient260_Case_Study/Data/Pathology_CollectionSpreadsheet.txt'
 data <- read.table(file, sep='\t', header = T, stringsAsFactors = F)
-data$lesion <- c(rep('lateral',10),rep('medial',10))
-data$lesion <- as.factor(data$lesion)
-dataTumor <- data[which(data$`Target...tumor.nuclei` > 0),]
-par(mfrow=c(1,2))
-dotchart(dataTumor[seq(18,1,-1),]$Target.BV.hyperplasia, dataTumor[seq(18,1,-1),]$Color, col=c(rep('red',8),rep('blue',10)), ylab="BV Hyperplasia")
-boxplot(dataTumor$Target.Ki67.BTRC.Count~dataTumor$lesion, col=c('blue','red'), ylab="Ki67")
-t.test(dataTumor[which(dataTumor$lesion=='lateral'),]$Target.Ki67.BTRC.Count,dataTumor[which(dataTumor$lesion=='medial'),]$Target.Ki67.BTRC.Count, alternative="less")
-ggplot(data, aes(x=aspect, y=CD163, fill=aspect)) + 
-  geom_boxplot(fill="white")+
-  geom_dotplot(binaxis='y', stackdir='center')+
-  scale_fill_manual(values=c("blue", "red"))+
-  theme(axis.text.x = element_text(size=12), axis.title = element_text(size = 12), axis.text.y = element_text(size=12), panel.background = element_rect(fill = 'white', colour = 'black'), legend.background=element_blank())+
+data$Color <- paste0('v',data$Color)
+samplesWithTumor <- data[which(data$`Target...tumor.nuclei` > 0),]$Color
+data$color <- 'blue'
+data[which(data$Color %in% medial_samples),]$color <- 'red'
+data$aspect <- as.factor(data$aspect)
+# BV Hyperplasia chart - show in all samples, since is a feature of microenvironment
+dotchart(data$Target.BV.hyperplasia, data$Color, col=data$color, ylab="BV Hyperplasia")
+toChi <- rbind(table(data[data$Target.BV.hyperplasia > 0,]$aspect), table(data[data$Target.BV.hyperplasia <= 0,]$aspect))
+rownames(toChi) <- c('<=0','>0')
+chisq.test(toChi) # not sig different
+# Ki67 boxplot - only in those samples with tumor cells
+toPlot <- data.frame(data[which(data$Color %in% lateral_samples & data$Color %in% samplesWithTumor),]$Target.Ki67.BTRC.Count,'lateral')
+colnames(toPlot) <- c('Ki67','aspect')
+toBind <- data.frame(data[which(data$Color %in% medial_samples & data$Color %in% samplesWithTumor),]$Target.Ki67.BTRC.Count,'medial')
+colnames(toBind) <- c('Ki67','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=Ki67, x=aspect, fill=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_point(position=position_jitterdodge()) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
+  stat_compare_means(aes(group = aspect), label = "p.format", method='wilcox.test')
+# CD163 boxplot - because not about only tumor cells, used all samples
+toPlot <- data.frame(data[which(data$Color %in% lateral_samples),]$CD163,'lateral')
+colnames(toPlot) <- c('CD163','aspect')
+toBind <- data.frame(data[which(data$Color %in% medial_samples),]$CD163,'medial')
+colnames(toBind) <- c('CD163','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=CD163, x=aspect, fill=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_point(position=position_jitterdodge()) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
+  stat_compare_means(aes(group = aspect), label = "p.format", method='wilcox.test', method.args = list(alternative = "greater"))
+# CD163 boxplot - because not about only tumor cells, used all samples
+toPlot <- data.frame(data[which(data$Color %in% lateral_samples),]$ps6,'lateral')
+colnames(toPlot) <- c('ps6','aspect')
+toBind <- data.frame(data[which(data$Color %in% medial_samples),]$ps6,'medial')
+colnames(toBind) <- c('ps6','aspect')
+toPlot <- rbind(toPlot, toBind)
+ggplot(data = toPlot, aes(y=ps6, x=aspect, fill=aspect)) + 
+  geom_boxplot(position="dodge", outlier.shape=NA) + 
+  geom_point(position=position_jitterdodge()) +
+  theme(axis.text.x = element_text(size=12, angle=90, hjust=1, color='black'), axis.title = element_text(size = 12, color='black'), axis.text.y = element_text(size=12, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
   stat_compare_means(aes(group = aspect), label = "p.format", method='wilcox.test', method.args = list(alternative = "greater"))
 ggplot(data, aes(x=aspect, y=ps6, fill=aspect)) + 
   geom_boxplot(fill="white")+
