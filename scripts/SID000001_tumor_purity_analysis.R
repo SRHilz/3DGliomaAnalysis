@@ -10,6 +10,8 @@ library(RColorBrewer)
 library(kableExtra)
 library(ggpubr)
 
+RMSE <- function(error) { sqrt(mean(error^2)) }
+
 pairwiseDist2pointsLPS <- function(p1, p2){#p1 and p2 are both vectors, in which [1] is x, [2] is y, and [3] is z
   return(sqrt( ((p2[1]-p1[1])^2) + ((p2[2]-p1[2])^2) + (((p2[3]-p1[3]))^2) ))
 }
@@ -74,10 +76,6 @@ toPlot <- subtype3DAtlas$T2Volume
 names(toPlot) <- subtype3DAtlas$Patient
 toPlot <- toPlot[patientOrder[patientOrder %in% names(toPlot)]]
 barplot(toPlot, las=2 )
-
-# subset P260 by medial and lateral
-#merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(10))),]$Patient <- 'P260-l'
-#merged[which(merged$Patient=='P260' & merged$SampleName %in% paste0('v',seq(from=11,to=20,by=1))),]$Patient <- 'P260-m'
 
 # specify purity metric to use
 merged$purity <- merged$FACETS
@@ -317,6 +315,49 @@ for (p in unique(snvCategories$patient)){
   toPlot <- rbind(toPlot, meanTumorWideVafsForPatientMerged)
 }
 toPlot$x2_meanTumorWideVAFs <- 2*toPlot$meanTumorWideVAFs
+toPlot[which(toPlot$x2_meanTumorWideVAFs > 1),]$x2_meanTumorWideVAFs <- 1
+
+## add in PyClone purity data and get RMSE from 1:1 line for each fit
+toPlot$pyClonePurity <- NA
+summary.stats <- data.frame(patient=character(), r2=numeric(), rmse=numeric(), stringsAsFactors = F)
+for (p in unique(toPlot$patient)){
+  print(p)
+  # read in pyclone cluster data
+  pycloneDataDir <- paste('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Data/',gsub('P','Patient',p),'/PyClone/', sep='')
+  mtry <- try(pycloneClusterData <- read.table(file.path(pycloneDataDir, 'tables/cluster.tsv'),  sep='\t', header = T, stringsAsFactors = F), silent = T)
+  if(!class(mtry) == "try-error"){
+    cluster_id <- clusterPurity[which(clusterPurity$Patient==p),]$Clonal
+    if(!is.na(cluster_id)){
+      for (s in unique(pycloneClusterData$sample_id)){
+        pyClonePurity <- pycloneClusterData[which(pycloneClusterData$sample_id==s & pycloneClusterData$cluster_id==cluster_id),]$mean
+        toPlot[which(toPlot$patient==p & toPlot$sample_type==s),]$pyClonePurity <- pyClonePurity
+      }
+      toPlotSubset <- toPlot[which(toPlot$patient == p),]
+      r2 <- summary(lm(x2_meanTumorWideVAFs~purity, data=toPlotSubset))$r.squared #NA values are ignored
+      rmse <-  RMSE(resid(lm(toPlotSubset$purity-toPlotSubset$x2_meanTumorWideVAFs ~ 0)))
+      summary.stats <- rbind(summary.stats, data.frame(cbind(patient=p, r2, rmse, comparison='IDH/FACETS_vs_2xMeanClonalVAF'), stringsAsFactors = F))
+      r2.new <- summary(lm(pyClonePurity~purity, data=toPlotSubset))$r.squared #NA values are ignored
+      rmse.new <-  RMSE(resid(lm(toPlotSubset$purity-toPlotSubset$pyClonePurity ~ 0)))
+      summary.stats <- rbind(summary.stats, data.frame(cbind(patient=p, r2=r2.new, rmse=rmse.new, comparison='IDH/FACETS_vs_pyClonePurity'), stringsAsFactors = F))
+    }
+  } else {
+    print('ERROR - PyClone file does not exist for this patient')
+  }
+}
+summary.stats$r2 <- as.numeric(summary.stats$r2)
+summary.stats$rmse <- as.numeric(summary.stats$rmse)
+ggplot(summary.stats, aes(x=r2, color=comparison)) +
+  geom_density() +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) 
+ggplot(summary.stats, aes(x=rmse, color=comparison)) +
+  geom_density() +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) 
+par(mfrow=c(1,1), mar=c(4,4,4,4))
+
+hist(summary.stats$r2)
+hist(summary.stats$rmse)
+plot(density(summary.stats$r2))
+plot(density(summary.stats$rmse))
 
 ## plot purity vs 2x meanVAF
 toPlot$PurityEstUsed <- as.factor(toPlot$PurityEstUsed)
@@ -329,8 +370,11 @@ colors <- toPlot[which(toPlot)]
 ggplot(toPlot, aes(x=x2_meanTumorWideVAFs, y=purity)) +
   geom_point(size=.8) +
   theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
-  geom_smooth(method = "lm", se=F, size=.5)+
+  geom_smooth(method = "lm", se=F, size=.5, fullrange=T)+
   labs(y='tumor purity', x='2 x mean tumor-wide VAFs') +
+  geom_abline(slope=1, intercept=0, col='grey') +
+  ylim(0,1) +
+  xlim(0,1) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                label.x.npc = "right", label.y.npc = 0.8, formula = y~x, 
                parse = TRUE, size = 3) + 
@@ -340,5 +384,20 @@ ggplot(toPlot, aes(x=x2_meanTumorWideVAFs, y=purity)) +
                   label.x.npc = 'right', label.y.npc = 0.4, size = 3) +
   facet_wrap(~patient)
 
-
-
+## plot purity vs pyClone Purity
+ggplot(toPlot, aes(x=pyClonePurity, y=purity)) +
+  geom_point(size=.8) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
+  geom_smooth(method = "lm", se=F, size=.5, fullrange=T)+
+  labs(y='tumor purity', x='pyClone Purrity') +
+  geom_abline(slope=1, intercept=0, col='grey') +
+  ylim(0,1) +
+  xlim(0,1) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               label.x.npc = "right", label.y.npc = 0.8, formula = y~x, 
+               parse = TRUE, size = 3) + 
+  stat_fit_glance(method = 'lm',
+                  geom = 'text',
+                  aes(label = paste("P-value = ", signif(..p.value.., digits = 4), sep = "")),
+                  label.x.npc = 'right', label.y.npc = 0.4, size = 3) +
+  facet_wrap(~patient)
