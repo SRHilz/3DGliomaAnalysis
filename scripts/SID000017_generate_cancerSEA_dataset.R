@@ -6,6 +6,7 @@
 
 computeZscore <- function(cpmList){
   zscores <- c()
+  cpmList <- log(1+cpmList,2)
   mean <- mean(cpmList)
   sd <- sd(cpmList)
   for (i in cpmList){
@@ -57,17 +58,22 @@ my_palette <- colorRampPalette(c("black", "pink", "red"))(n = 1000)
 sampleData <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
 sampleData$sampleID <- paste0(sampleData$Patient,sampleData$SampleName)
 sampleData <- sampleData[which(sampleData$sampleID %in% sampleNames),]
-patientsToUse <- unique(sampleData$Patient)
 
-## read in signatures
+# restrict sampleNames to those also in sampleData
+sampleNames <- sampleNames[sampleNames %in% sampleData$sampleID]
+
+## read in signatures and remove genes for which we don't have CPMs for
 signatureFiles <- list.files(path=signaturesPath, pattern="*.txt", full.names=FALSE, recursive=FALSE)
 signaturesAll <- list()
 for (file in signatureFiles){
   signatureName <- gsub('.txt','',file)
+  print(signatureName)
   signature <- read.table(paste0(signaturesPath, file), header = TRUE, 
                                 colClasses=c("NULL","character")) %>% unlist
   colnames(signature) <- NULL
-  signaturesAll[[signatureName]] <- signature[signature %in% rownames(CPMs)]
+  print(length(signature))
+  signaturesAll[[signatureName]] <- signature[signature %in% rownames(CPMs)] 
+  print(length(signaturesAll[[signatureName]]))
 }
 
 # set up structures to collect data in
@@ -76,14 +82,25 @@ zscores <- setNames(replicate(length(signatureNames),data.frame()),signatureName
 zscoresdf <- c()
 geneExpression <- setNames(replicate(length(signatureNames),data.frame()),signatureNames)
 patientLables <- sampleData$Patient
+geneCorrelation <- data.frame(correlation = numeric(), signatureMeanGeneExpression= numeric(), signature = character())
 # populate data structures
 for (sig in signatureNames){
-  signatureGenes <- signaturesAll[sig] %>% unlist
+  # array of all genes in signature for which we have CPMs
+  signatureGenes <- signaturesAll[sig] %>% unlist 
   signatureGeneExpression <- CPMs[signatureGenes,sampleNames]
   # populate our object that collects CPMs for each gene in signature
-  geneExpression[[sig]] <- rbind(geneExpression[[sig]], signatureGeneExpression)
+  geneExpression[[sig]] <- signatureGeneExpression
   # populate our object that collcts scores for each signature
   zscore <- computeMeanZscore(signatureGeneExpression)
+  # determine the mean expression of each gene in that signature
+  signatureMeanGeneExpression <- rowMeans(signatureGeneExpression)
+  # determine the correlation between each gene's expression and the zscore
+  signatureGeneCorrelation <- cor(t(signatureGeneExpression), zscore)
+  #populate object that collects this information for correlation and expression (by gene)
+  toBind <- cbind(gene = rownames(signatureGeneCorrelation), correlation = signatureGeneCorrelation, meanCPM = data.frame(signatureMeanGeneExpression), signature = sig)
+  row.names(toBind) <- c()
+  geneCorrelation <-  rbind(geneCorrelation, toBind)
+  #populate object that collects this information for the zscore (by signature)
   means <- colMeans(signatureGeneExpression)
   scoreOut <- cbind(patientLables,sampleNames,zscore, means)
   rownames(scoreOut) <- NULL
@@ -97,6 +114,28 @@ for (sig in signatureNames){
 }
 colnames(zscoresdf) <- signatureNames
 write.table(zscoresdf, file=paste0(outputPath,outfolder,'cancerSEA_signature_zscores.txt'), sep='\t', col.names = NA)
+
+# plot correlation vs mean expression for each gene in each signature (used to identify genes that server as markers for a signature)
+ggplot(geneCorrelation, aes(x=correlation, y=log(signatureMeanGeneExpression,2))) +
+  geom_point(size=.8) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black')) +
+  labs(y='log2 Mean CPM', x='Correlation (Pearson\'s R)') +
+  facet_wrap(~signature)
+
+# compare abundance between tumor types
+toPlot <- bind_rows(zscores, .id = "signature")
+toPlotAgg <- aggregate(zscore~patient+signature, toPlot, mean)
+toPlotAgg$subtype <- NA
+toPlotAgg[which(toPlotAgg$patient %in% subsetIDHwtc),]$subtype <- 'IDH-wtc'
+toPlotAgg[which(toPlotAgg$patient %in% subsetIDHmut),]$subtype <- 'IDH-mut'
+toPlotAgg <- toPlotAgg[which(!is.na(toPlotAgg$subtype)),]
+toPlotAgg$subtype <- factor(toPlotAgg$subtype, levels=unique(toPlotAgg$subtype))
+ggplot(toPlotAgg, aes(x=signature, y=zscore, fill=subtype)) +
+  geom_boxplot(position=position_dodge(0.8), outlier.shape = NA) +
+  geom_jitter(shape=16, position=position_jitter(0.2)) +
+  scale_fill_manual(values=c("black","#11cc42"))+
+  labs(y= "Mean gene z-score of log2 CPM")+
+  theme(axis.text.x = element_text(size=10, color="black",angle = 90),axis.title = element_text(size = 10), axis.text.y = element_text(size=10, color="black"), panel.background = element_rect(fill = 'white', colour = 'black'))
 
 # add in distance info
 zscoresdfWithSpatial <- as.data.frame(zscoresdf)
