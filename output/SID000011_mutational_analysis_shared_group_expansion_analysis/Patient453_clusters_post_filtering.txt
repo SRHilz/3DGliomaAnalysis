@@ -1,3 +1,3 @@
-COBL_chr7_51096422_G_T	2
-DNHD1_chr11_6561178_C_T	2
-WFDC8_chr20_44180784_G_A	2
+version https://git-lfs.github.com/spec/v1
+oid sha256:bb2b83989d4d5c9d9e9a87523567fbe31c2412bed1dc4d0898ceac7dc4dd0dfe
+size 78

@@ -1,9 +1,3 @@
-cluster	threshold	meanDistanceWithin	meanDistanceRandom	p	n	samples
-1	0.1	48.6781028800425	31.331187923474	0.93	2	Recurrence1v1,Recurrence1v2
-1	0.05	48.6781028800425	31.331187923474	0.93	2	Recurrence1v1,Recurrence1v2
-1	0.01	48.6781028800425	31.331187923474	0.93	2	Recurrence1v1,Recurrence1v2
-1	0.001	48.6781028800425	31.331187923474	0.93	2	Recurrence1v1,Recurrence1v2
-2	0.1	27.2647472480261	31.331187923474	0.27	4	Recurrence1v3,Recurrence1v4,Recurrence1v5,Recurrence1v6
-2	0.05	27.2647472480261	31.331187923474	0.27	4	Recurrence1v3,Recurrence1v4,Recurrence1v5,Recurrence1v6
-2	0.01	27.2647472480261	31.331187923474	0.27	4	Recurrence1v3,Recurrence1v4,Recurrence1v5,Recurrence1v6
-2	0.001	27.2647472480261	31.331187923474	0.27	4	Recurrence1v3,Recurrence1v4,Recurrence1v5,Recurrence1v6
+version https://git-lfs.github.com/spec/v1
+oid sha256:a18498efe2e00fc80cd4fbc80ef5ca131a796c9c810515d46246d7e56941872c
+size 780

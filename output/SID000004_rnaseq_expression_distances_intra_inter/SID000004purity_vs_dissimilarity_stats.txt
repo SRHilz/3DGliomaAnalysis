@@ -1,5 +1,3 @@
-patientRelationship	IDH.Mut	R	p
-inter	0	0.233	0.336
-inter	1	-0.375	0.045
-intra	0	-0.473	0.237
-intra	1	-0.752	0.012
+version https://git-lfs.github.com/spec/v1
+oid sha256:6441e037f18931cb79bcbfecba1d33434caa11f83bb76b68a54bd22c5ac1c188
+size 115

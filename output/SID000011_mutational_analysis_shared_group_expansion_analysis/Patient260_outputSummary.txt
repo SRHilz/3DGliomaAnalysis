@@ -1,13 +1,3 @@
-cluster	threshold	meanDistanceWithin	meanDistanceRandom	p	n	samples
-1	0.1	15.9216502858515	20.0528669340151	0.13	5	Recurrence1-v12,Recurrence1-v13,Recurrence1-v14,Recurrence1-v18,Recurrence1-v19
-1	0.05	15.9216502858515	20.0528669340151	0.13	5	Recurrence1-v12,Recurrence1-v13,Recurrence1-v14,Recurrence1-v18,Recurrence1-v19
-1	0.01	15.9216502858515	20.0528669340151	0.13	5	Recurrence1-v12,Recurrence1-v13,Recurrence1-v14,Recurrence1-v18,Recurrence1-v19
-1	0.001	21.222466600532	20.0528669340151	0.81	11	Recurrence1-v2,Recurrence1-v3,Recurrence1-v5,Recurrence1-v7,Recurrence1-v8,Recurrence1-v9,Recurrence1-v12,Recurrence1-v13,Recurrence1-v14,Recurrence1-v18,Recurrence1-v19
-2	0.1	17.3657622925111	20.0528669340151	0.4	2	Recurrence1-v12,Recurrence1-v13
-2	0.05	17.3657622925111	20.0528669340151	0.4	2	Recurrence1-v12,Recurrence1-v13
-2	0.01	17.3657622925111	20.0528669340151	0.4	2	Recurrence1-v12,Recurrence1-v13
-2	0.001	21.2212016096394	20.0528669340151	0.67	8	Recurrence1-v4,Recurrence1-v5,Recurrence1-v8,Recurrence1-v9,Recurrence1-v12,Recurrence1-v13,Recurrence1-v14,Recurrence1-v19
-4	0.1	12.8640560196949	20.0528669340151	0	10	Recurrence1-v1,Recurrence1-v2,Recurrence1-v3,Recurrence1-v4,Recurrence1-v5,Recurrence1-v6,Recurrence1-v7,Recurrence1-v8,Recurrence1-v9,Recurrence1-v10
-4	0.05	12.8640560196949	20.0528669340151	0	10	Recurrence1-v1,Recurrence1-v2,Recurrence1-v3,Recurrence1-v4,Recurrence1-v5,Recurrence1-v6,Recurrence1-v7,Recurrence1-v8,Recurrence1-v9,Recurrence1-v10
-4	0.01	12.8640560196949	20.0528669340151	0	10	Recurrence1-v1,Recurrence1-v2,Recurrence1-v3,Recurrence1-v4,Recurrence1-v5,Recurrence1-v6,Recurrence1-v7,Recurrence1-v8,Recurrence1-v9,Recurrence1-v10
-4	0.001	14.9487751209883	20.0528669340151	0	11	Recurrence1-v1,Recurrence1-v2,Recurrence1-v3,Recurrence1-v4,Recurrence1-v5,Recurrence1-v6,Recurrence1-v7,Recurrence1-v8,Recurrence1-v9,Recurrence1-v10,Recurrence1-v19
+version https://git-lfs.github.com/spec/v1
+oid sha256:0375fbcc7ab2f979452d415915855e164aaa085052b57c88ecdcf9649ec0d8d5
+size 1883

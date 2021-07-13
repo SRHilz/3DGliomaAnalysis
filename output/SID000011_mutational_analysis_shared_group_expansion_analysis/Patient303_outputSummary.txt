@@ -1,17 +1,3 @@
-cluster	threshold	meanDistanceWithin	meanDistanceRandom	p	n	samples
-1	0.1	17.009064224111	16.172472072277	0.57	5	Primaryv10,Primaryv5,Primaryv6,Primaryv8,Primaryv9
-1	0.05	15.198308600543	16.172472072277	0.33	6	Primaryv10,Primaryv4,Primaryv5,Primaryv6,Primaryv8,Primaryv9
-1	0.01	16.4319898572717	16.172472072277	0.47	7	Primaryv10,Primaryv3,Primaryv4,Primaryv5,Primaryv6,Primaryv8,Primaryv9
-1	0.001	16.4319898572717	16.172472072277	0.47	7	Primaryv10,Primaryv3,Primaryv4,Primaryv5,Primaryv6,Primaryv8,Primaryv9
-3	0.1	12.6816924241602	16.172472072277	0.21	3	Primaryv2,Primaryv3,Primaryv7
-3	0.05	12.6816924241602	16.172472072277	0.21	3	Primaryv2,Primaryv3,Primaryv7
-3	0.01	16.0954262510511	16.172472072277	0.39	7	Primaryv10,Primaryv2,Primaryv3,Primaryv4,Primaryv6,Primaryv7,Primaryv8
-3	0.001	16.172472072277	16.172472072277	1	9	Primaryv10,Primaryv2,Primaryv3,Primaryv4,Primaryv5,Primaryv6,Primaryv7,Primaryv8,Primaryv9
-4	0.1	15.2521277204199	16.172472072277	0.53	2	Primaryv5,Primaryv7
-4	0.05	19.8047973202196	16.172472072277	0.96	5	Primaryv10,Primaryv3,Primaryv5,Primaryv6,Primaryv7
-4	0.01	16.172472072277	16.172472072277	1	9	Primaryv10,Primaryv2,Primaryv3,Primaryv4,Primaryv5,Primaryv6,Primaryv7,Primaryv8,Primaryv9
-4	0.001	16.172472072277	16.172472072277	1	9	Primaryv10,Primaryv2,Primaryv3,Primaryv4,Primaryv5,Primaryv6,Primaryv7,Primaryv8,Primaryv9
-5	0.1	11.6333357211077	16.172472072277	0.19	2	Primaryv4,Primaryv5
-5	0.05	11.6333357211077	16.172472072277	0.19	2	Primaryv4,Primaryv5
-5	0.01	11.9236624006802	16.172472072277	0.07	4	Primaryv4,Primaryv5,Primaryv8,Primaryv9
-5	0.001	11.9236624006802	16.172472072277	0.07	4	Primaryv4,Primaryv5,Primaryv8,Primaryv9
+version https://git-lfs.github.com/spec/v1
+oid sha256:8feab06b329353399479c8cf28834d2b2bdbb1f0a483fb4c6e6f5d863731e5eb
+size 1655

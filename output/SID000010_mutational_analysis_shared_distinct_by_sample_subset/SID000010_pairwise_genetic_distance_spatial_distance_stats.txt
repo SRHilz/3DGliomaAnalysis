@@ -1,15 +1,3 @@
-p	R	x	y	m	b	color	patient	adj.p	label
-6.19e-01	0.076	0	40	0.12	65.34	purple4	Patient450	0.619	p=0.619, R=0.076
-8.09e-01	0.088	0	41.5	0.13	15.44	darkmagenta	Patient302	0.809	p=0.809, R=0.088
-2.97e-01	0.514	0	43	0.44	15.86	darkorchid1	Patient300	0.297	p=0.297, R=0.514
-7.39e-01	0.094	0	44.5	0.2	45.41	mediumorchid1	Patient276	0.739	p=0.739, R=0.094
-1.10e-21	0.768	0	46	0.98	-6.16	mediumpurple1	Patient260	1.1e-21	p=1.1e-21, R=0.768
-8.57e-01	-0.096	0	47.5	-0.05	21.05	salmon	Patient485	0.857	p=0.857, R=-0.096
-6.90e-02	-0.994	0	49	-0.92	35.88	orange	Patient475	0.069	p=0.069, R=-0.994
-4.13e-01	-0.161	0	50.5	-0.1	15.25	red2	Patient454	0.413	p=0.413, R=-0.161
-2.60e-01	0.257	0	52	0.36	11.09	firebrick4	Patient413	0.26	p=0.26, R=0.257
-1.18e-01	0.302	0	53.5	0.3	19.04	yellow3	Patient482	0.118	p=0.118, R=0.302
-3.58e-01	0.211	0	55	0.12	10.01	darkolivegreen4	Patient453	0.358	p=0.358, R=0.211
-1.72e-05	0.594	0	56.5	0.55	-0.14	darkgreen	Patient375	1.72e-05	p=1.72e-05, R=0.594
-2.00e-03	0.498	0	58	0.27	3.87	mediumseagreen	Patient327	0.002	p=0.002, R=0.498
-7.68e-07	0.719	0	59.5	0.63	3.51	chartreuse	Patient303	7.68e-07	p=7.68e-07, R=0.719
+version https://git-lfs.github.com/spec/v1
+oid sha256:3e0ada959f7f4123831ce869cf7f455ccb936705abccf34778e678ed24460400
+size 1130

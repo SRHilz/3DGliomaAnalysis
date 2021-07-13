@@ -1,2 +1,3 @@
-a	b	estimate	pvalue	corr.pvalue	isSignificant
-purity	totalSNVsCalled	0.911321948636614	3.64469147588084e-14	3.64469147588084e-14	1
+version https://git-lfs.github.com/spec/v1
+oid sha256:6dd88a0703d164b19d56a81245352f99b18b85e51eb75197db75e381d27fef90
+size 131

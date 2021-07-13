@@ -1,1 +1,3 @@
- APOE    SPARCL1    VIM    ID4    TIMP3    EDNRB    MLC1    ID3    CLU    TNC    ZFP36L1    ARHGEF26    ATP1B2    AGT    RGMA    JUN    PFKFB3    EZR    SLC1A3    ALDOC    JUNB    ATP1A2    DTNA    ZFP36    SOX9    TRIL    NDRG2    NMB    GFAP    SLC1A2    RFX4    MALAT1    LRIG1    FOS    EGR1    STK17B    FOSB    ATF3    ABCA1    ADCYAP1R1    GLUL    IER2    ZFP36L2    ADHFE1    MSI2    CPE    KLF6    DOCK7    IRF2BP2    SPRY2
+version https://git-lfs.github.com/spec/v1
+oid sha256:e3e35f664c0290053fe9641c0d5c08aa6b4b575caf9b6119300ba4b09d52042c
+size 481

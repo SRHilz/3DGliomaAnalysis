@@ -1,21 +1,3 @@
-Color	Target % tumor nuclei	Target BV hyperplasia	Target Ki67 BTRC Count	Mean Cells/200X Field	ps6	CD163	aspect	Notes on Targets		
-1	30	0	42.76	191	NA		lateral	Edge of tumor-1/3 is solif tumor score 3; 2/3 is 0		
-2	55	0	53.11	332.6	NA		lateral	infiltrating and edge		
-3	75	0	48.03	259.7	27.20970537	0.711678832	lateral			
-4	60	0	55.63	239.6	12.42668622	1.368613139	lateral	infiltrating ctx		
-5	50	1	32.04	226.2	NA	1.017881706	lateral	"PV tumor, infiltrate ctx"		
-6	75	0	40.83	361.6	NA		lateral			
-7	75	0	48.37	346.6	19.75717439	0.564971751	lateral			
-8	80	0	37.19	331.6	NA		lateral			
-9	80	0	59.71	309	NA		lateral			
-10	80	0	42.01	335.6	15.18165212	6.213489113	lateral			
-11	0	0	13.72	113.9	NA		medial			
-12	90	2	51.06	330.3	92.8049466	4.537270436	medial	ctx		
-13	90	1	34.61	242	60.546875	15.4954955	medial	hyalinized BV		
-14	75	0	42.37	226	NA		medial	hyalinized BV		
-15	65	0	54.96	262	NA		medial			
-16	40	0	41.75	228.7	NA		medial			
-17	0	0	4.23	136	NA		medial	partially crushed		
-18	90	2	60.41	458	94.97607656	21.1328125	medial			
-19	60	0	45.48	302.6	NA		medial	hyalinized BV		
-20	75	2	65.52	321	NA	0.617379225	medial			
+version https://git-lfs.github.com/spec/v1
+oid sha256:74cbed55a5d96d12769b16f674eeea4cb1659b9c804b83f9754e85cdb2940ee4
+size 1141

@@ -1,5 +1,3 @@
-cluster	threshold	meanDistanceWithin	meanDistanceRandom	p	n	samples
-2	0.1	21.1499483185899	18.8276464181283	0.69	4	Primary-v4,Primary-v8,Primary-v9,Primary-v10
-2	0.05	20.4787386431112	18.8276464181283	0.71	5	Primary-v4,Primary-v5,Primary-v8,Primary-v9,Primary-v10
-2	0.01	20.4787386431112	18.8276464181283	0.71	5	Primary-v4,Primary-v5,Primary-v8,Primary-v9,Primary-v10
-2	0.001	18.8276464181283	18.8276464181283	1	7	Primary-v4,Primary-v5,Primary-v6,Primary-v7,Primary-v8,Primary-v9,Primary-v10
+version https://git-lfs.github.com/spec/v1
+oid sha256:20841b548d5778e281bd85d9bb92d719cbff8d9dc97d3b12701b165f833df328
+size 492
