@@ -102,8 +102,7 @@ if (requireSM){
 }
 
 # specify purity metric to use
-merged$purity <- merged$FACETS
-merged[which(merged$PurityEstUsed == 'IDH'),]$purity <- 2*merged[which(merged$PurityEstUsed == 'IDH'),]$IDH1_VAF
+merged$purity <- merged$PyClone
 
 # Filter based on purity and inspect numbers of samples per patient
 merged <- merged[which(merged$purity >= purityCutoff),]
@@ -127,14 +126,6 @@ kable(table(merged$Patient)) %>%
 # Set final patients to use
 patientsToUse <- patientOrder[patientOrder %in% unique(merged$Patient)]
 
-# Create an empty column for the periph and centroid coding
-merged$peripheral <- NA
-merged$centroid <- NA
-merged[which(merged$DistPeriph <= 7),]$peripheral <- 1
-merged[which(merged$DistPeriph > 7),]$peripheral <- 0
-merged[which(merged$DistCentroid <= 17),]$centroid <- 1
-merged[which(merged$DistCentroid > 17),]$centroid <- 0
-
 # Create an empty data frame for storing the number of total mutations called per patient that are clonal, shared, or private - will only
 #  be done for small subset of patients with comparable samples
 SNVcategoryPerPatient <- data.frame(patient=character(),
@@ -155,6 +146,7 @@ for (p in patientsToUse){
   
   # get vafs
   muts <- read.delim(avfFile, as.is=TRUE)
+  muts <- muts[muts$decision=='retain',]
   if('X.gene' %in% colnames(muts)){
     geneIndex <- grep('X.gene',colnames(muts))
     colnames(muts)[geneIndex] <- 'gene'

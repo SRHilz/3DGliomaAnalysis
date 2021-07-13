@@ -114,16 +114,6 @@ plotDistanceSegmentsCentroid <- function(centroid, sampleCoord){
   segments3d(x=x, y=y, z=z, col='red')
 }
 
-correctOrientation <-function(a){#does an x and then y axis reflection
-#on a 3D array [x,y,z] of imaging data
-  for (z in seq_len(dim(a)[3])){
-    for (y in seq_len(dim(a)[2])){
-      a[,y,z] <- rev(a[,y,z])
-    }
-  }
-  return(a)
-}
-
 defineCentroid <- function(peripheryPoints){
   x <- mean(peripheryPoints$x)
   y <- mean(peripheryPoints$y)
@@ -142,9 +132,9 @@ calcDistancesCentroid <- function(samplePoints, centroid, adj){
 }
 
 # Specify patient and load the config file for that patient. Config file contains paths to imaging files + ordering of samples + sample names + colors
-patientID <- 'Patient457'
-sf <- "sf11915"
-tumorPrefix <- "Primaryv"
+patientID <- 'Patient507'
+sf <- "sf12446"
+tumorPrefix <- "Primary-v"
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 modelsPath <- paste0(dataPath, '/3Dmodels/',patientID,'/',sf)
 
