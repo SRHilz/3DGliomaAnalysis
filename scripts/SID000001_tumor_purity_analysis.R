@@ -9,6 +9,8 @@ library(stats)
 library(RColorBrewer)
 library(kableExtra)
 library(ggpubr)
+library(ComplexHeatmap)
+library(tidyr)
 
 RMSE <- function(error) { sqrt(mean(error^2)) }
 
@@ -36,6 +38,7 @@ plotSampleDistances <- function(merged){
   for (p in unique(merged_3DAtlas$Patient)){
     print(p)
     localP <- merged_3DAtlas[which(merged_3DAtlas$Patient==p),]
+    sampn <- length(localP$SampleName)
     allSampleCombinations <- combn(localP$SampleName,2)
     for (c in 1:ncol(allSampleCombinations)){
       a <- allSampleCombinations[1,c]
@@ -43,17 +46,33 @@ plotSampleDistances <- function(merged){
       a.coords <- localP[which(localP$SampleName==a),c('L.Coordinate','P.Coordinate','S.Coordinate')]
       b.coords <- localP[which(localP$SampleName==b),c('L.Coordinate','P.Coordinate','S.Coordinate')]
       distance <- pairwiseDist2pointsLPS(a.coords,b.coords)
-      toBind <- data.frame(c(patient=p, samplePair=paste0(a,'_','b'), distance=distance))
+      toBind <- data.frame(c(patient=p, samplePair=paste0(a,'_',b), distance=distance, sampn=sampn))
       pairwideDistances <- rbind(pairwideDistances, toBind)
     }
   }
-  colnames(pairwideDistances) <- c('patient','samplePair','distance')
+  colnames(pairwideDistances) <- c('patient','samplePair','distance','sampn')
   pairwideDistances$patient <- factor(pairwideDistances$patient, levels=orderToUse)
+  sampn <- pairwideDistances[,c('patient','sampn')]
+  sampn <- sampn[!duplicated(sampn),]
   # violin plot of average pairwise distance
-  ggplot(pairwideDistances, aes(x=pairwideDistances$patient, y=distance)) + 
+  ggplot(pairwideDistances, aes(x=patient, y=distance)) + 
     geom_violin(width=1.2,fill='grey')+
+    geom_text(data=sampn, aes(patient, Inf, label=paste0('',sampn)), inherit.aes=TRUE, parse=FALSE, size=3, vjust=2) +
     theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))+
     geom_boxplot(width=0.1)
+}
+
+addIndelToMat <- function(mat){
+  # a function to add indels to the mat
+  for (p in colnames(mat)){
+    mutFile <- file.path(dataPath, 'mutations_avf',paste0(gsub('P','Patient',p),'.R.mutations.avf.txt'))
+    mutData <- read.csv(mutFile, sep='\t', header=T)
+    mutDataIndels <- mutData[mutData$algorithm=='Pindel' & mutData$decision=='retain',]$X.gene
+    if (any(rownames(mat) %in% mutDataIndels)){
+      mat[rownames(mat) %in% mutDataIndels,p] <- 'unassigned indel'
+    }
+  }
+  return(mat)
 }
 
 # user-defined variables
@@ -281,6 +300,24 @@ for (p in unique(mergeSMIDHwtc$Patient)){
   }
 }
 
+# Visualize all IDH-mut tumors
+mergedSM <- merged[which(merged$SampleType=='SM'),]
+mergeSMIDHmut <- mergedSM[which(mergedSM$molType %in% c('IDH-mut_A','IDH-mut_O')),]
+for (p in unique(mergeSMIDHmut$Patient)){
+  print(p)
+  print('total samples (SM only')
+  total <- nrow(mergeSMIDHmut[which(mergeSMIDHmut$Patient == p),])
+  print(total)
+  print('samples with purity < .6 (SM only')
+  belowThresh <- nrow(mergeSMIDHmut[which(mergeSMIDHmut$Patient == p & mergeSMIDHmut$purity < .6),])
+  print(belowThresh)
+  if (belowThresh/total >= .5){
+    print('majority')
+  } else {
+    print('minority')
+  }
+}
+
 # get out grade by patient 
 grade <- unique(merged[,c('Patient','Grade')])$Grade
 names(grade) <- unique(merged[,c('Patient','Grade')])$Patient
@@ -336,17 +373,213 @@ ggplot(data = summaryNoP452, aes(y=mad, x=IDHwtTERT, fill = IDHwtTERT)) +
 hist(summaryNoP452[which(summaryNoP452$IDHwtTERT==F),]$medians)
 fligner.test(medians ~ IDHwtTERT, data = summaryNoP452)
 
-# plot boxplot ordered by variance in purity
+# plot boxplot of purities by patient
+orderToUse <- patientOrder
 mergedSM <- merged[which(merged$SampleType=='SM'),]
 mergedSM$Patient <- factor(mergedSM$Patient, levels=orderToUse)
-boxplot(mergedSM$purity~mergedSM$Patient, col = 'white', ylab = 'Estimated CCF', las='2', outline = FALSE, boxlty = 0)
-stripchart(mergedSM$purity~mergedSM$Patient, vertical = TRUE, #separated out sm and non sm as gives control to color them separately
-           method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5)
+boxplot(mergedSM$purity~mergedSM$Patient, col = 'white', ylab = 'Estimated CCF', las='2', outline = FALSE, boxlty = 0, outlier.shape = NA, whisklty = 0, staplelty = 0)
+stripchart(mergedSM$purity~mergedSM$Patient, vertical = TRUE, 
+           method = "jitter", add = TRUE, pch = 20, col = c('#000000'), cex=.5) 
 
 # set patient level order (Oligo, Astro, GBM, with Primaries always before Recurrences)
 merged$Patient <- factor(merged$Patient, levels=patientOrder)
 
-# bring in PyClone data (number of clusters/sample)
+# bring in PyClone data with muts annotated for oncoprint
+vafsPerSample <- read.table(mutationDataFile, sep='\t', header=T)
+
+# make oncoprint
+vafsPerSample$onco_type <- vafsPerSample$pyclone_category
+vafsPerSample[which(vafsPerSample$clonal),]$onco_type <- 'clonal'
+vafsPerSample[which(is.na(vafsPerSample$clonal)),]$onco_type <- 'unassigned snv'
+toSpread <- vafsPerSample[vafsPerSample$SangerCancerGeneCensus.=='YES',c('SNVuniqueID','patient','onco_type')]
+toSpread <- toSpread[!duplicated(toSpread),]
+matByLocus <- spread(toSpread, 'patient','onco_type')
+matByLocus$gene <- sapply(matByLocus$SNVuniqueID, function(x) strsplit(x,'_')[[1]][1])
+mat <- c()
+for (g in unique(matByLocus$gene)){
+  geneSubset <- matByLocus[matByLocus$gene==g,colnames(matByLocus)[!colnames(matByLocus) %in% c('SNVuniqueID','gene')]]
+  nastring <- paste(rep('NA',nrow(geneSubset)), collapse=',')
+  collapsed <- sapply(colnames(geneSubset), function(x) paste(geneSubset[,x], collapse=','))
+  collapsed <- gsub(nastring,NA, collapsed)
+  collapsed <- gsub('NA,','',collapsed)
+  collapsed <- gsub(',NA','',collapsed)
+  mat <- rbind(mat, c(g, collapsed))
+}
+rownames(mat) <- mat[,1]
+mat <- mat[,-1]
+mat <- mat[rowSums(!is.na(mat)) > 2,] #require that mutation is in at least 2 patients
+mat <- addIndelToMat(mat) # add indels for any genes that make the cut based on SNVs
+# set up alter function for mat
+col <- c(clonal="forestgreen",`tumor-wide`="red",shared="blue",private="orange", `unassigned snv`='black', `unassigned indel`='black')
+alter_fun <- list(
+  background = function(x,y,w,h) grid.rect(x,y,w*0.9,h*0.9,gp=gpar(fill='#e0e0e0',col=NA)),
+  clonal = function(x,y,w,h) grid.rect(x,y,w*0.9, h*0.9, gp=gpar(fill=col["clonal"], col = NA)),
+  `tumor-wide` = function(x,y,w,h) grid.rect(x,y,w*0.9, h*0.5, gp=gpar(fill=col["tumor-wide"], col = NA)),
+  shared = function(x,y,w,h) grid.rect(x,y,w*0.9, h*0.4, gp=gpar(fill=col["shared"], col = NA)),
+  private = function(x,y,w,h) grid.rect(x,y,w*0.9, h*0.2, gp=gpar(fill=col["private"], col = NA)),
+  `unassigned snv` = function(x,y,w,h) grid.points(x,y,pch=16, gp=gpar(col=col["unassigned snv"])),
+  `unassigned indel` = function(x,y,w,h) grid.points(x,y,pch=17, gp=gpar(col=col["unassigned indel"]))
+)
+# create bottom annotation
+clustersPerPatient <- vafsPerSample[,c('patient','cluster_id','onco_type')]
+clustersPerPatient <- clustersPerPatient[!duplicated(clustersPerPatient),]
+clustersPerPatient <- clustersPerPatient[complete.cases(clustersPerPatient),]
+numClustersPerPatient <- table(clustersPerPatient$patient)
+clustersTypePerPatient <- table(clustersPerPatient$patient,clustersPerPatient$onco_type)
+propShared <- clustersTypePerPatient[,'shared']/rowSums(clustersTypePerPatient)
+propPrivate <- clustersTypePerPatient[,'private']/rowSums(clustersTypePerPatient)
+# compute average number of clones per sample and patient
+clonesPerSample <- vafsPerSample[,c('uniqueID2','cluster_id','pyclone_called')]
+clonesPerSample <- clonesPerSample[complete.cases(clonesPerSample),]
+clonesPerSample <- clonesPerSample[clonesPerSample$pyclone_called,]
+clonesPerSample <- clonesPerSample[!duplicated(clonesPerSample),]
+numClonesPerSample <- table(clonesPerSample$uniqueID2)
+pycloneSamplesUsed <- apply(vafsPerSample[which(vafsPerSample$pyclone_category_used),c('patient','sampleID')],1,paste, collapse='')
+clonesPerSampleByPatient <- numClonesPerSample[unique(pycloneSamplesUsed)]
+clonesPerSampleByPatient <- data.frame(cbind(clonesPerSampleByPatient,sapply(names(clonesPerSampleByPatient), substr, start=1, stop=4)))
+clonesPerSampleByPatient$clonesPerSampleByPatient <- as.numeric(clonesPerSampleByPatient$clonesPerSampleByPatient)
+clonesPerSampleByPatient$V2 <- factor(clonesPerSampleByPatient$V2, levels=unique(clonesPerSampleByPatient$V2))
+medianClonesPerSampleByPatientDf <- aggregate(clonesPerSampleByPatient~V2, data=clonesPerSampleByPatient, median)
+medianClonesPerSampleByPatient <- medianClonesPerSampleByPatientDf$clonesPerSampleByPatient
+names(medianClonesPerSampleByPatient) <- medianClonesPerSampleByPatientDf$V2
+medianClonesPerSampleByPatient <- medianClonesPerSampleByPatient[colnames(mat)]
+# tag recurrent samples
+recurrent <- colnames(mat) %in% subsetRecurrent
+# define colors
+propClone.col.spectrum=colorRamp2(c(0,max(propShared)), c('white','black'))
+medClone.col.spectrum=colorRamp2(c(0,5,max(medianClonesPerSampleByPatient)), c('lightyellow','darkorange','red'))
+ann_colors <- list(
+  propShared=propClone.col.spectrum,
+  propPrivate=propClone.col.spectrum,
+  medianClonesPerSampleByPatient=medClone.col.spectrum
+)
+
+df <- data.frame(cbind(propShared, propPrivate, medianClonesPerSampleByPatient, recurrent))
+bottom_annotation <- HeatmapAnnotation(numClusts=anno_barplot(c(numClustersPerPatient)), df=df, col=ann_colors)
+
+oncoColOrder <- match(patientOrder, colnames(mat))
+oncoPrint(mat, 
+          alter_fun=alter_fun, 
+          col=col,
+          column_order = oncoColOrder,
+          bottom_annotation = bottom_annotation,
+          show_column_names = TRUE)
+
+# look at relationship between tp53 and medainClonesPerSample
+tp53tumors <- ifelse(names(medianClonesPerSampleByPatient) %in% colnames(mat)[!is.na(mat['TP53',])], 'TP53 mut','TP53 wt')
+names(tp53tumors) <- colnames(mat)
+tp53tumors['P260'] <- 'TP53 mut' #this one is germline, so not called in MuTect but we know it is there.
+subtypedata$TP53Mut <- tp53tumors[match(subtypedata$Patient, names(tp53tumors))]
+subtypedata$MedClonesPerSample <- as.numeric(medianClonesPerSampleByPatient[match(subtypedata$Patient, names(medianClonesPerSampleByPatient))])
+subtypedata$binary <- ifelse(subtypedata$IDH_Mut==1,'IDH mut','IDH wt TERT')
+subtypedata[subtypedata$Patient=='P452',]$binary <- NA
+subtypedata$numClones <- as.numeric(numClustersPerPatient[match(subtypedata$Patient, names(numClustersPerPatient))])
+p <- ggboxplot(subtypedata, x = "TP53Mut", y = "MedClonesPerSample",
+              color="TP53Mut", palette = "jco",
+               add = "jitter")
+p + stat_compare_means(method = "wilcox")
+
+p <- ggboxplot(subtypedata, x = "binary", y = "MedClonesPerSample",
+               color="binary", palette = "jco",
+               add = "jitter")
+p + stat_compare_means(method = "wilcox")
+
+p <- ggboxplot(subtypedata, x = "TP53Mut", y = "numClones",
+               color="TP53Mut", palette = "jco",
+               add = "jitter")
+p + stat_compare_means(method = "wilcox")
+
+p <- ggboxplot(subtypedata, x = "binary", y = "numClones",
+               color="binary", palette = "jco",
+               add = "jitter")
+p + stat_compare_means(method = "wilcox")
+
+p <- ggboxplot(subtypedata, x = "TP53Mut", y = "numClones",
+               color="TP53Mut", palette = "jco",
+               add = "jitter")
+p + stat_compare_means(method = "wilcox")
+# plot purity by TP53 status; might also want to create a model that controls for purity
+medianPurityPerPatient <- aggregate(purity~Patient, data=merged, median)
+subtypedata$medianPurity <- medianPurityPerPatient[match(medianPurityPerPatient$Patient, subtypedata$Patient),]$purity
+p <- ggboxplot(subtypedata, x = "TP53Mut", y = "medianPurity",
+               color="TP53Mut", palette = "jco",
+               add = "jitter")
+p + stat_compare_means(method = "wilcox")
+
+
+# look at relationship between metrics and purity 
+# compute number of samples per patient
+samplesPerPatient <- vafsPerSample[,c('patient','sampleID')]
+samplesPerPatient <- samplesPerPatient[!duplicated(samplesPerPatient),]
+numSamplesPerPatient <- table(samplesPerPatient$patient)
+subtypedata$numSamples <- as.numeric(numSamplesPerPatient[match(subtypedata$Patient, names(numSamplesPerPatient))])
+subtypedata$numClones <- as.numeric(numClustersPerPatient[match(subtypedata$Patient, names(numClustersPerPatient))])
+# plot samples vs clones
+ggplot(subtypedata, aes(x=numSamples, y=numClones)) + 
+  geom_point() +
+  geom_text(label=subtypedata$Patient, size=3, nudge_x=1) +
+  geom_smooth(method="lm", color="blue", se=F) +
+  scale_y_continuous(breaks=c(2,4,6,8,10,12,14)) +
+  stat_cor(method = "pearson", label.x = 3, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+ggplot(subtypedata, aes(x=T2Volume, y=numClones)) + 
+  geom_point() +
+  geom_text(label=subtypedata$Patient, size=3, nudge_x=1) +
+  geom_smooth(method="lm", color="blue", se=F) +
+  scale_y_continuous(breaks=c(2,4,6,8,10,12,14)) +
+  stat_cor(method = "pearson", label.x = 3, label.y = 12)+
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+# add number of clones per sample to merged
+vafsPerSample$uniqueID2 <- paste0(vafsPerSample$patient, vafsPerSample$sampleID)
+merged$uniqueID2 <- paste0(merged$Patient, merged$sample_type)
+merged$numClusters <- as.numeric(numClonesPerSample[match(merged$uniqueID2, names(numClonesPerSample))])
+# compute mutations per sample - one for calls and one for vafs
+mutsPerSample <- vafsPerSample[,c('uniqueID2','SNVuniqueID','mut_called','vaf')]
+mutsPerSample <- mutsPerSample[complete.cases(mutsPerSample),]
+mutsPerSample <- mutsPerSample[!duplicated(mutsPerSample),]
+mutsPerSampleCalled <- mutsPerSample[mutsPerSample$mut_called,]
+numMutsPerSampleCalled <- table(mutsPerSampleCalled$uniqueID2)
+mutsPerSampleNonzero <- mutsPerSample[mutsPerSample$vaf > 0,]
+numMutsPerSampleNonzero <- table(mutsPerSampleNonzero$uniqueID2)
+merged$numMutsCalled <- as.numeric(numMutsPerSampleCalled[match(merged$uniqueID2, names(numMutsPerSampleCalled))])
+merged$numMutsNonzero <- as.numeric(numMutsPerSampleNonzero[match(merged$uniqueID2, names(numMutsPerSampleNonzero))])
+# plot purity vs clusters (I also looked at purity x coverage and coverage alone, and these were not sig associated)
+ggplot(merged, aes(x=purity, y=numClusters)) + 
+  geom_point() +
+  geom_smooth(method="lm", color="blue", se=F) +
+  scale_y_continuous(breaks=c(2,4,6,8,10,12,14)) +
+  stat_cor(method = "pearson", label.x = .1, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+# plot purity vs muts called
+ggplot(merged[!merged$Patient=='P452',], aes(x=purity, y=numMutsCalled)) + #leaving off HM patient since is such an outlier
+  geom_point() +
+  geom_smooth(method="lm", color="blue", se=F) +
+  stat_cor(method = "pearson", label.x = .1, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+# plot purity vs muts detected at all
+ggplot(merged[!merged$Patient=='P452',], aes(x=purity, y=numMutsNonzero)) + #leaving off HM patient since is such an outlier
+  geom_point() +
+  geom_smooth(method="lm", color="blue", se=F) +
+  stat_cor(method = "pearson", label.x = .1, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+# plot purity vs muts called with cutoff
+ggplot(merged[(!merged$Patient=='P452') & merged$purity >= 0.2,], aes(x=purity, y=numMutsCalled)) + #leaving off HM patient since is such an outlier
+  geom_point() +
+  geom_smooth(method="lm", color="blue", se=F) +
+  stat_cor(method = "pearson", label.x = .1, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+# plot purity vs muts detected at all with cutoff
+ggplot(merged[(!merged$Patient=='P452') & merged$purity >= 0.1,], aes(x=purity, y=numMutsNonzero)) + #leaving off HM patient since is such an outlier
+  geom_point() +
+  geom_smooth(method="lm", color="blue", se=F) +
+  stat_cor(method = "pearson", label.x = .1, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
+# plot purity vs number of clones with cutoff
+ggplot(merged[(!merged$Patient=='P452') & merged$purity >= 0.5,], aes(x=purity, y=numClusters)) + #leaving off HM patient since is such an outlier
+  geom_point() +
+  geom_smooth(method="lm", color="blue", se=F) +
+  stat_cor(method = "pearson", label.x = .1, label.y = 12) +
+  theme(axis.text.x = element_text(size=10, angle=90, color='black'), axis.title = element_text(size = 10, color='black'), axis.text.y = element_text(size=10, color='black'), panel.background = element_rect(fill = 'white', colour = 'black'))
 
 
 # create colors for radial plots 
