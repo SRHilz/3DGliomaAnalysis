@@ -1,4 +1,5 @@
 # Created: 2018.08.29
+# Updated: 2021.09.17 to use PyClone output
 # By: Stephanie R Hilz
 # Usage: For a list of patients, calculates the average total number of mutations
 #  identified when 1, 2, 3, 4...n number of samples are used. It furthermore
@@ -7,6 +8,7 @@
 
 library(ggplot2)
 library(kableExtra)
+library(reshape2)
 
 getPatient <- function(x){
   strsplit(x, '_')[[1]][1]
@@ -72,20 +74,23 @@ getMutsBin <- function(avfile){ #from Tali's phylo tree code, pulls out all cove
   return(muts.bin)
 }
 
+# read in config file info
+source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
+
 # specify cutoffs - which patients to look at, how many samples will be used, and how pure each must be;
 #  if there are more samples than samplesPerPatientToUse, will average result from all possible combinations
 #  of this number.
-purityCutoff <- .7
+purityCutoff <- finalPurityCutoffCalls
 maxN <- 6
-patientsToUse <- c("Patient303","Patient327",'Patient375','Patient453','Patient450','Patient260','Patient482',"Patient413",'Patient454','Patient276')
-colors <- c(rep('gray40',7),rep('firebrick4',3))
-HGGSamples <- c("Patient413",'Patient454','Patient276')
-recSamples <- c("Patient260",'Patient450','Patient276')
+patientsWithTooFewUsableSamples <- c('P457','P475','P481','P485') # these patients do not have a min of 6 samples with purity over cutoff
+patientsToUse <- patientOrder
+patientsToUse <- patientsToUse[!patientsToUse %in% patientsWithTooFewUsableSamples] 
+patientsToUse <- patientsToUse[!patientsToUse=='P452'] #Patient452 is HM and so has a mut number on a different scale than others
+HGGSamples <- subsetIDHwtc[subsetIDHwtc %in% patientsToUse]
+recSamples <- subsetRecurrent[subsetRecurrent %in% patientsToUse]
+colors <- c(rep('gray40',(length(patientsToUse) - length(subsetIDHwtc))),rep('firebrick4',length(subsetIDHwtc)))
 shapes <- c(16,17,15,3,8,9,1,16,17,8)
 outfolder <- 'SID000006_mutational_analysis_total_by_patient_by_sample_number/'
-
-# read in config file info
-source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
 
 # read in sample data file
 data <- read.table(sampleDataFile, sep='\t', header = T, stringsAsFactors = F)
@@ -108,14 +113,23 @@ merged <- merged[which(merged$WES_ID %in% toUse),]
 merged <- merged[which(merged$SampleType=='SM'),]
 
 # specify purity metric to use
-merged$purity <- merged$FACETS
-merged[which(merged$PurityEstUsed == 'IDH'),]$purity <- 2*merged[which(merged$PurityEstUsed == 'IDH'),]$IDH1_VAF
+merged$purity <- merged$PyClone
+merged[merged$PurityEstUsed=='FACETS',]$purity <- merged[merged$PurityEstUsed=='FACETS',]$FACETS
 
 # Filter based on purity and inspect numbers of samples per patient
 merged <- merged[which(merged$purity >= purityCutoff),]
 kable(table(merged$Patient)) %>%
         kable_styling(bootstrap_options = c("striped", "hover")) %>%
         row_spec(0, bold=TRUE, background = "#C2BFBA")
+
+# Set final patients to use
+patientsToUse <- patientOrder[patientOrder %in% patientsToUse]
+
+# bring in mutation categories for each patient
+vafsPerSample <- read.table(mutationDataFile, sep='\t', header=T)
+
+# Subset our categories to this number
+vafsPerSample_Filtered <- vafsPerSample[vafsPerSample$patient %in% gsub('Patient','P',patientsToUse),]
 
 # Create an empty data frame for storing the number of mutations called in each sample based on n and combination
 mutTotalPerSampleSubset <- data.frame(patientID=character(),
@@ -129,51 +143,56 @@ mutTotalPerSampleSubset <- data.frame(patientID=character(),
                                            Tumor=character(),
                                            stringsAsFactors=FALSE) 
 
-for (patientID in patientsToUse){
-  
-  print(patientID)
-  patient_ID <- gsub('Patient','P',patientID)
+for (p in patientsToUse){
+  print(p)
+  patient_ID <- gsub('Patient','P',p)
   Histology <- unique(as.character(merged[which(merged$Patient == patient_ID),]$Histology))
   Tumor <- unique(as.character(merged[which(merged$Patient == patient_ID),]$Tumor))
   
-  # files to use
-  avfFile <- paste0(dataPath,patientID,'.R.mutations.avf.txt')
+  # subset variants to patient
+  vafsPerSample_Filtered_subset <- vafsPerSample_Filtered[vafsPerSample_Filtered$patient==p,]
   
-  # run muts.bin function, which creates the same logical matrix used for phylo trees
-  muts.bin <- getMutsBin(avfFile) #muts.bin for all samples in the patient, not yet subsetted
-  
-  # make the column names so they can string match our sample names
-  colnames(muts.bin) <- gsub('[.]','-',colnames(muts.bin))
-  colnames(muts.bin) <- gsub('_called','',colnames(muts.bin))
-  
-  # subset this by samples that fit our standards (those left in merged)
-  highPuritySamples <- as.character(merged[which(merged$Patient == patient_ID),]$sample_type )
-  muts.bin <- muts.bin[,highPuritySamples] 
+  # pull out all samples that were usable for pyclone
+  samplesToUse <- unique(vafsPerSample_Filtered_subset[which(vafsPerSample_Filtered_subset$mut_category_used==T),]$sampleID)
+  samplesToUse <- samplesToUse[samplesToUse %in% merged[which(merged$Patient == patient_ID),]$sample_type]
   
   # k is total number of samples for this patient (need to be of correct purity + have exome)
-  k <- ncol(muts.bin)
+  k <- length(samplesToUse)
+  if (k > 10){
+    k = 10
+  }
   
-  # now for n from 1 to k
-  for (n in 1:k){
+  # now for n from 2 to k (we don't ever use just 1 sample)
+  for (n in 2:k){
+    print(n)
     
     # define some empty variables we will update later - this is to help us denote which is the min and max distance combos by n
     distanceMin <- c(1000000, NA) #start with a value very large so all will be smaller, NA will be replaced with sample combo
     distanceMax <- c(0, NA) #start with a value very small so all will be larger, NA will be replaced with sample combo
     
     # identify all possible combinations of the specified number of samples for this patient
-    combinations <- combn(highPuritySamples, n) #will just have one column if using all samples
+    combinations <- combn(samplesToUse, n) #will just have one column if using all samples
     
     # calculate number of total mutations for the patient plus distance between them
     for (c in 1:ncol(combinations)){
       
-      # specify sample subset
+      # subset to combination used
       samplesForCombo <- combinations[,c]
-      samplesForComboFused <- paste(combinations[,c], collapse=',')
+      vafsPerSample_Filtered_subset_local <- vafsPerSample_Filtered_subset[vafsPerSample_Filtered_subset$sampleID %in% samplesForCombo,]
+      samplesForComboFused <- paste(samplesForCombo, collapse=',')
       
-      # calcualte total number of muts called for this particular sample subset set as well as clonal only for that subset
-      muts.bin.subset <- as.data.frame(muts.bin[,samplesForCombo])
-      mutsTotal <- nrow(as.data.frame(muts.bin.subset[which(rowSums(muts.bin.subset) > 0),])) # pulls out all muts called in at least one sample of this subset
-      mutsClonal <- nrow(as.data.frame(muts.bin.subset[which(rowSums(muts.bin.subset)== ncol(muts.bin.subset)),]))
+      # create variant by sample call matrix
+      mat <- acast(vafsPerSample_Filtered_subset_local[,c('SNVuniqueID','sampleID','mut_called')], SNVuniqueID~sampleID, value.var="mut_called")
+      
+      # drop NAs - these are unclassified by PyClone and we will compute stats on them later
+      mat <- mat[complete.cases(mat),]
+      
+      # compute call numbers
+      callNums <- rowSums(mat)
+      
+      # compute number of total mutations called and those found in all samples in our sample combination
+      mutsTotal <- length(callNums[callNums > 0]) 
+      mutsClonal <- length(callNums[callNums == length(samplesForCombo)]) 
       
       # calculate average distance between all samples for this particular sample subset set
       if (n > 1){
@@ -186,11 +205,11 @@ for (patientID in patientsToUse){
       
       # determine if this distance is larger or smaller than others for this patient so far
       if (n > 1 & n < k){
-        if (meanDistance > distanceMax[1]){
+        if (meanDistance > as.numeric(distanceMax[1])){
           distanceMax[1] <- meanDistance
           distanceMax[2] <- samplesForComboFused
         }
-        if (meanDistance < distanceMin[1]){
+        if (meanDistance < as.numeric(distanceMin[1])){
           distanceMin[1] <- meanDistance
           distanceMin[2] <- samplesForComboFused
         }
@@ -205,28 +224,30 @@ for (patientID in patientsToUse){
       
       # rbind to final output structure
       names <- c('patientID','n','samplesForComboFused','meanDistance','tag','mutsTotal','mutsClonal','Histology','Tumor')
-      mutTotalPerSampleSubset <- rbind.data.frame(mutTotalPerSampleSubset,c(patientID, n, samplesForComboFused, meanDistance, tag, mutsTotal, mutsClonal, Histology, Tumor), stringsAsFactors = F)
+      mutTotalPerSampleSubset <- rbind.data.frame(mutTotalPerSampleSubset,c(patient_ID, n, samplesForComboFused, meanDistance, tag, mutsTotal, mutsClonal, Histology, Tumor), stringsAsFactors = F)
       colnames(mutTotalPerSampleSubset) <- names
     }
     
-    # only if we are at n for which 1 < n < k is true
-    if (n > 1 & n < k){
+    # only if we are at n for which 2 < n < k is true
+    if (n > 2 & n < k){
       print("Finishing up and determining tags")
       # for this n, tag the sample combo that ended up being the sample max
       mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$samplesForComboFused == distanceMax[2] & 
-                                    mutTotalPerSampleSubset$patientID == patientID &
+                                    mutTotalPerSampleSubset$patientID == p &
                                     mutTotalPerSampleSubset$n == n),]$tag <- 'distMax'
     
       # for this n, tag the sample combo that ended up being the sample min
       mutTotalPerSampleSubset[which(mutTotalPerSampleSubset$samplesForComboFused == distanceMin[2] & 
-                                    mutTotalPerSampleSubset$patientID == patientID &
+                                    mutTotalPerSampleSubset$patientID == p &
                                     mutTotalPerSampleSubset$n == n),]$tag <- 'distMin'
     }
   }
 }
 
+### LEFT OFF HERE
+
 # save data into a supplemental table
-#write.table(mutTotalPerSampleSubset, file=paste0(outputPath, outfolder, "SID000006_TableS_mutational_analysis_total_by_patient_by_sample_number.txt"), quote=F, row.names=F)
+write.table(mutTotalPerSampleSubset, file=paste0(outputPath, outfolder, "SID000006_TableS_mutational_analysis_total_by_patient_by_sample_number.txt"), quote=F, row.names=F)
 
 # whip data into the proper types so that we can both do some math on it and plot it
 mutTotalPerSampleSubset$mutsTotal <- as.numeric(mutTotalPerSampleSubset$mutsTotal)
@@ -283,7 +304,7 @@ for (n in unique(dataText$n)){
 dataText$x <- as.numeric(dataText$x)
 dataText$y <- as.numeric(dataText$y)
 dataText$label <- paste0('p=',dataText$adj.p,', R=',dataText$R)
-#write.table(dataText, file=paste0(outputPath,outfolder,'SID000006_mutsSubclonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
+write.table(dataText, file=paste0(outputPath,outfolder,'SID000006_mutsSubclonal_distance_n_stats.txt'),sep='\t', quote=F, row.names = F)
 # plot
 ggplot(mutTotalPerSampleSubsetUsableN, aes(x=meanDistance, y=mutsSubclonal, color=patientID)) +
   geom_point() +
