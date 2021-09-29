@@ -75,10 +75,9 @@ ensmblRoot <- function(ensmblID){
 }
 
 # User-defined variables
-tag <- 'SID000003_20190913_expanded_gbm'
+tag <- 'SID000003_20210524_resubmission'
 outfolder <- 'SID000003_RNAseq_Summary_Analysis/'
 countsType <- '.symbol.coding.counts'
-
 
 # read in config file info
 source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications/Hilz2018_IDHSpatioTemporal/Scripts/3DGliomaAnalysis/scripts/studyConfig.R')
@@ -117,10 +116,17 @@ subtypedata <- read.table(patientTumorDataFile, sep='\t', header = T)
 merged <- merge(data, subtypedata, by="Patient")
 
 # color assignment by tumor type
-merged$color <- 'green'
-merged[which(merged$Histology=='Oligo'),]$color <- 'blue'
-merged[which(merged$Histology=='GBM'),]$color <- 'red'
+merged$color <- 'black'
+merged[merged$IDH_Mut==0,]$color <- 'red'
+merged[merged$IDH_Mut==0 & merged$TERT==0,]$color <- 'orange'
 merged$sampleID <- paste0(merged$Patient,merged$SampleName)
+
+# color assignment by purity
+merged$purity <- merged$PyClone
+merged[which(merged$PurityEstUsed=='FACETS'),]$purity <- merged[which(merged$PurityEstUsed=='FACETS'),]$FACETS
+merged$color2 <- 'orange'
+merged[which(merged$purity < 0.3),]$color2 <- 'black'
+merged[is.na(merged$purity),]$color2 <- 'grey'
 
 #PubQuality PCA plot with % explained
 par(bg = 'white')
@@ -135,12 +141,12 @@ log=log10(1+nrm_count_matrix)
 tlog=t(log)
 pca=prcomp(tlog)
 summary(pca)
-colors <- merged$color
+colors <- merged$color2
 names(colors) <- merged$sampleID
 colors = colors[colnames(nrm_count_matrix)]
 raw <- pca$x[,1:4]
-xaxis <- 2
-yaxis <- 3
+xaxis <- 1
+yaxis <- 2
 xlab <- paste('PC',toString(xaxis),' (',toString(round(100*summary(pca)$importance[2,xaxis])),'%)')
 ylab <- paste('PC',toString(yaxis),' (',toString(round(100*summary(pca)$importance[2,yaxis])),'%)')
 xaxisExtra <-(max(raw[,xaxis])-min(raw[,xaxis]))/4
