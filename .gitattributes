@@ -1,1 +1,2 @@
+output/SID000006_mutational_analysis_total_by_patient_by_sample_number/SID000006_TableS_mutational_analysis_total_by_patient_by_sample_number.txt filter=lfs diff=lfs merge=lfs -text
 *.txt filter=lfs diff=lfs merge=lfs -text
