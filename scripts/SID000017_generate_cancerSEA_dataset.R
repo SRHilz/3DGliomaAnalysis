@@ -43,7 +43,7 @@ source('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Publications
 # User-defined variables and file paths (will also need to make sure VenteicherSignatures folder is in dataPath)
 tag <- 'SID000017'
 outfolder <- 'SID000017_generate_cancerSEA_dataset/'
-CPMFile <- paste0(dataPath,'SID000003_20190913_expanded_gbm.symbol.coding.CPMs.csv')
+CPMFile <- paste0(dataPath,'SID000003_20210524_resubmission.symbol.coding.CPMs.csv')
 signaturesPath <- paste0(dataPath,'CancerSEASignatures/')
 
 ## read in cpm data for all patients
