@@ -21,15 +21,13 @@ toUse <- data[which(!is.na(data$WES_ID)),]$WES_ID
 merged <- merged[which(merged$WES_ID %in% toUse),]
 
 # specify purity metric to use
-merged$purity <- merged$FACETS
-merged[which(merged$PurityEstUsed == 'IDH'),]$purity <- 2*merged[which(merged$PurityEstUsed == 'IDH'),]$IDH1_VAF
-
-# make NA values .1 to account for these values, typically due to low tumor purity
-merged[which(is.na(merged$FACETS)),]$purity <- .1
+merged$purity <- merged$PyClone
+merged[merged$PurityEstUsed=='FACETS',]$purity <- merged[merged$PurityEstUsed=='FACETS',]$FACETS
 
 ## PART 2 - read in TCGA data
 # Read in TCGA-GBM FACETS output
-facets_tcga <- read.table('TCGA_GBM_FACETS.txt',sep='\t', header = T)
+tcgaFile <- file.path('/Users/shilz/Documents/Professional/Positions/UCSF_Costello/Projects/2016_LoglioExomeAnalysis/Analysis_and_Results/tcga_gbm/','TCGA_GBM_FACETS.txt')
+facets_tcga <- read.table(tcgaFile,sep='\t', header = T)
 vial_col <- c()
 # as for other analyses, replaced NA in facets with .1, as this is typical when purity is too low to assess
 for (i in 1:nrow(facets_tcga)){
